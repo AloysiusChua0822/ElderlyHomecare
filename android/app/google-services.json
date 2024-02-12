@@ -1,0 +1,106 @@
+{
+  "project_info": {
+    "project_number": "576730007031",
+    "firebase_url": "https://elderly-homecare-firebase-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "elderly-homecare-firebase",
+    "storage_bucket": "elderly-homecare-firebase.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576730007031:android:2fe9cd9e1c1a2f298c9af2",
+        "android_client_info": {
+          "package_name": "com.example.assignment2"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdbX_x400dI1G9UjTriZTL9PVGMxVGLTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576730007031:android:2dd59af7225083158c9af2",
+        "android_client_info": {
+          "package_name": "com.example.eldergit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdbX_x400dI1G9UjTriZTL9PVGMxVGLTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576730007031:android:d69bfaf14f466aa58c9af2",
+        "android_client_info": {
+          "package_name": "com.example.firebase"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdbX_x400dI1G9UjTriZTL9PVGMxVGLTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576730007031:android:3abf1fe8485d1b738c9af2",
+        "android_client_info": {
+          "package_name": "com.example.firebase_crud"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdbX_x400dI1G9UjTriZTL9PVGMxVGLTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:576730007031:android:6bcec74b6e7b10dd8c9af2",
+        "android_client_info": {
+          "package_name": "com.example.firestore_snippets"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCdbX_x400dI1G9UjTriZTL9PVGMxVGLTI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
