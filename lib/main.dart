@@ -1,5 +1,3 @@
-import 'package:eldergit/screens/Login.dart';
-import 'package:eldergit/screens/Home.dart';
 import 'package:eldergit/screens/mainscreen.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';

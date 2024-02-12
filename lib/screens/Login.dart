@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:eldergit/screens/Register.dart'; // Import the register screen to navigate to it
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:eldergit/screens/Home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'dart:io';
@@ -34,7 +35,11 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       // Attempt to login
       await _firebaseAuth.signInWithEmailAndPassword(email: _email, password: _password);
-      // Navigate to another screen if successful
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => HomeScreen()),
+            (Route<dynamic> route) => false,
+      );
     } on FirebaseAuthException catch (e) {
       var message = 'An error occurred, please check your credentials!';
 
