@@ -1,6 +1,54 @@
+import 'package:eldergit/screens/activityscreen.dart';
 import 'package:flutter/material.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
+  @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+class _HomeScreenState extends State<HomeScreen> {
+  int _selectedIndex = 0; // The index of the currently selected tab
+
+  void _onItemTapped(int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+    // Add your navigation logic here. For example:
+    switch (index) {
+      case 0:
+      // Navigate to Home
+      // Navigator.of(context).pushNamed('/home');
+        break;
+      case 1:
+      // Navigate to Community
+      // Navigator.of(context).pushNamed('/community');
+        break;
+      case 2:
+      // Navigate to Messages
+      // Navigator.of(context).pushNamed('/messages');
+        break;
+      case 3:
+      // Navigate to Profile
+      // Navigator.of(context).pushNamed('/profile');
+        break;
+    }
+  }
+
+  // Define the UI for each tab. For now, we will just show a placeholder Text widget.
+  Widget _getTabContent() {
+    switch (_selectedIndex) {
+      case 0: // Home
+        return Text('Home Content'); // Replace with actual home content
+      case 1: // Community
+        return Text('Community Content'); // Replace with actual community content
+      case 2: // Messages
+        return Text('Messages Content'); // Replace with actual messages content
+      case 3: // Profile
+        return Text('Profile Content'); // Replace with actual profile content
+      default:
+        return Text('Other Content'); // Fallback content
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -96,7 +144,8 @@ class HomeScreen extends StatelessWidget {
                         SizedBox(width: 8),
                         Icon(Icons.remove_circle_outline, size: 48, color: Colors.white),
                       ],
-                    ),                  );
+                    ),
+                  );
                 },
               ),
             ),
@@ -125,9 +174,23 @@ class HomeScreen extends StatelessWidget {
             label: 'Profile',
           ),
         ],
+        currentIndex: _selectedIndex,
         selectedItemColor: Colors.blue,
         unselectedItemColor: Colors.grey,
+        onTap: _onItemTapped,
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => ActivityScreen()),
+          );
+        }, // This closing parenthesis ends the onPressed function
+        child: Icon(Icons.add),
+        tooltip: 'Add Activity', // Optional, provides a label for accessibility
+      ),
+// Optional: Position your button if you don't want it in the default location
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 }
