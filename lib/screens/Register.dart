@@ -19,6 +19,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   TextEditingController _emailController = TextEditingController();
   TextEditingController _passwordController = TextEditingController();
   TextEditingController _usernameController = TextEditingController();
+  final List<String> _userTypes = ['Elder', 'Charity Worker', 'Health Personnel'];
+  String? _selectedUserType;
   File? _userImageFile;
   bool _isLoading = false;
 
@@ -35,6 +37,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
     if (_userImageFile == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Please pick an image.'), backgroundColor: Theme.of(context).errorColor),
+      );
+      return;
+    }
+
+    if (_selectedUserType == null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Please select a user type.'),backgroundColor:Theme.of(context)
+      .errorColor),
       );
       return;
     }
@@ -59,6 +68,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'username': _usernameController.text.trim(),
           'email': _emailController.text.trim(),
           'image_url': imageUrl,
+          'userType': _selectedUserType,
         });
 
         Navigator.pushAndRemoveUntil(
@@ -140,6 +150,27 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           if (value == null || value.length < 6) return 'Password must be at least 6 characters.';
                           return null;
                         },
+                      ),
+                      SizedBox(height: 20),
+                      DropdownButtonFormField<String>(
+                        value: _selectedUserType,
+                        decoration: InputDecoration(
+                          labelText: 'User Type',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.person_outline),
+                        ),
+                        items: _userTypes.map((String type) {
+                          return DropdownMenuItem<String>(
+                            value: type,
+                            child: Text(type),
+                          );
+                        }).toList(),
+                        onChanged: (String? newValue) {
+                          setState(() {
+                            _selectedUserType = newValue;
+                          });
+                        },
+                        validator: (value) => value == null ? 'Please select a user type' : null,
                       ),
                       SizedBox(height: 40),
                       _isLoading
