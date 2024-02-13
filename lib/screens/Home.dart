@@ -6,6 +6,7 @@ import 'package:eldergit/screens/activityscreen.dart';
 import 'package:eldergit/screens/Login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'Community.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -42,12 +43,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _getTabContent() {
     switch (_selectedIndex) {
-      case 1: return Text('Community Content');
-      case 2: return Text('Messages Content');
-      case 3: return Text('Profile Content');
-      default: return Text('');
+      case 1:
+        return CommunityListScreen(); // Return the CommunityListScreen widget
+      case 2:
+        return Text('Messages Content');
+      case 3:
+        return Text('Profile Content');
+      default:
+        return SizedBox.shrink(); // Return an empty SizedBox as default
     }
   }
+
 
   Future<void> _logout() async {
     await FirebaseAuth.instance.signOut();
