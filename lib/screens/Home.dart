@@ -186,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
             MaterialPageRoute(builder: (context) => ActivityScreen()),
           );
         }, // This closing parenthesis ends the onPressed function
-        child: Icon(Icons.add),
+        child: Icon(Icons.remove_red_eye),
         tooltip: 'Add Activity', // Optional, provides a label for accessibility
       ),
 // Optional: Position your button if you don't want it in the default location
