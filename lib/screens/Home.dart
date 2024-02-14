@@ -2,6 +2,7 @@ import 'package:eldergit/screens/addmedication.dart';
 import 'package:eldergit/screens/chat.dart';
 import 'package:eldergit/screens/mainscreen.dart';
 import 'package:eldergit/screens/medication.dart';
+import 'package:eldergit/screens/news.dart';
 import 'package:flutter/material.dart';
 import 'package:eldergit/screens/activityscreen.dart';
 import 'package:eldergit/screens/Login.dart';
@@ -146,8 +147,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       _bigButton(context, Icons.healing, 'Medication', Colors.white, Colors.green, () {
                         Navigator.push(context, MaterialPageRoute(builder: (context) => ViewMedicationScreen()));                      }),
                       _bigButton(context, Icons.article, 'News', Colors.white, Colors.orangeAccent, () {
-                        // Navigate to News Screen or perform action
-                      }),
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => ViewNewsScreen()));                      }),
                     ],
                   ),
                 )
