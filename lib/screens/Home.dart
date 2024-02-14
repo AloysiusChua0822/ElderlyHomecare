@@ -1,5 +1,6 @@
 import 'package:eldergit/screens/addmedication.dart';
 import 'package:eldergit/screens/chat.dart';
+import 'package:eldergit/screens/contactlist.dart';
 import 'package:eldergit/screens/mainscreen.dart';
 import 'package:eldergit/screens/medication.dart';
 import 'package:eldergit/screens/news.dart';
@@ -9,6 +10,7 @@ import 'package:eldergit/screens/Login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:eldergit/screens/Community.dart';
+
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -47,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
     if (index == 2) { // Assuming Community is at index 1
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (context) => const ChatScreen(), // Replace CommunityListScreen with the actual class name of your Community screen
+        builder: (context) => ContactListScreen (), // Replace CommunityListScreen with the actual class name of your Community screen
       ));
     }else {
       setState(() {
@@ -62,7 +64,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return CommunityListScreen(); // Return the CommunityListScreen widget
       case 2:
-        return ChatScreen();
+        return ContactListScreen ();
       case 3:
         return Text('Profile Content');
       default:
