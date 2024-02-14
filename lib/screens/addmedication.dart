@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eldergit/models/medicationmodel.dart';
+import 'package:eldergit/classes/medicationclass.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddMedicationScreen extends StatefulWidget {
   final Medication? medication;
@@ -20,6 +21,7 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
   TextEditingController _dosageController = TextEditingController();
   TextEditingController _frequencyController = TextEditingController();
   File? _imageFile;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
 
   @override
   void initState() {
@@ -69,12 +71,19 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
       };
 
       try {
-        if (widget.medication == null) {
-          await FirebaseFirestore.instance.collection('medications').add(medicationData);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication added successfully')));
-        } else {
-          await FirebaseFirestore.instance.collection('medications').doc(widget.medication!.id).update(medicationData);
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication updated successfully')));
+        User? currentUser = _auth.currentUser; // Get current user
+        if (currentUser != null) {
+          String userId = currentUser.uid; // User ID
+
+          if (widget.medication == null) {
+            // Adding new medication under user's sub-collection
+            await FirebaseFirestore.instance.collection('users').doc(userId).collection('medications').add(medicationData);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication added successfully')));
+          } else {
+            // Updating existing medication under user's sub-collection
+            await FirebaseFirestore.instance.collection('users').doc(userId).collection('medications').doc(widget.medication!.id).update(medicationData);
+            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication updated successfully')));
+          }
         }
         Navigator.pop(context);
       } catch (e) {

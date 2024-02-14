@@ -1,5 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eldergit/models/activitymodel.dart';
+import 'package:eldergit/classes/activityclass.dart';
 import 'package:eldergit/screens/add_activity_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -106,6 +106,54 @@ class _ActivityScreenState extends State<ActivityScreen> {
     );
   }
 
+  Future<void> _joinActivity(String activityId) async {
+    final User? user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await _firestore.collection('activities').doc(activityId).update({
+        'participants': FieldValue.arrayUnion([user.uid])
+      });
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('You have joined the activity')));
+    }
+  }
+
+  void _viewParticipants(BuildContext context, List<String> participants) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text("Participants"),
+        content: Container(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: participants.length,
+            itemBuilder: (context, index) {
+              return FutureBuilder<DocumentSnapshot>(
+                future: FirebaseFirestore.instance.collection('users').doc(participants[index]).get(),
+                builder: (context, snapshot) {
+                  if (!snapshot.hasData || snapshot.connectionState == ConnectionState.waiting) {
+                    return ListTile(title: Text('Loading...'));
+                  }
+                  // Correctly cast the snapshot data to Map<String, dynamic> before accessing it
+                  final data = snapshot.data?.data() as Map<String, dynamic>?;
+                  String participantName = data?['username'] ?? 'Unknown';
+                  return ListTile(title: Text(participantName));
+                },
+              );
+            },
+          ),
+        ),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: Text('Close'),
+          ),
+        ],
+      ),
+    );
+  }
+
+
+
 
   @override
   Widget build(BuildContext context) {
@@ -133,6 +181,25 @@ class _ActivityScreenState extends State<ActivityScreen> {
                     : CircleAvatar(child: Icon(Icons.photo)),
                 title: Text(activity.title),
                 subtitle: Text(activity.description),
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Join button
+                    IconButton(
+                      icon: Icon(Icons.group_add),
+                      onPressed: () async {
+                        await _joinActivity(activity.id);
+                      },
+                    ),
+                    // View participants button
+                    IconButton(
+                      icon: Icon(Icons.people),
+                      onPressed: () {
+                        _viewParticipants(context, activity.participants);
+                      },
+                    ),
+                  ],
+                ),
               );
             },
           );

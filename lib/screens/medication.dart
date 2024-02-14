@@ -2,18 +2,28 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:eldergit/models/medicationmodel.dart';
+import 'package:eldergit/classes/medicationclass.dart';
 import 'package:eldergit/screens/addmedication.dart';
 
 class ViewMedicationScreen extends StatelessWidget {
-  File? _imageFile;
-  final Stream<List<Medication>> _medicationsStream = FirebaseFirestore.instance
-      .collection('medications')
-      .snapshots()
-      .map((snapshot) => snapshot.docs
-      .map((doc) => Medication.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-      .toList());
+  final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth instance
 
+  Stream<List<Medication>> get _medicationsStream {
+    final User? user = _auth.currentUser;
+    if (user != null) {
+      return FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .collection('medications')
+          .snapshots()
+          .map((snapshot) => snapshot.docs
+          .map((doc) => Medication.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList());
+    } else {
+      // Return an empty stream if there's no user logged in
+      return Stream.empty();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -70,6 +80,7 @@ class ViewMedicationScreen extends StatelessWidget {
   }
 
   Future<void> _deleteMedication(BuildContext context, String medicationId) async {
+    // Confirm deletion dialog
     final bool confirm = await showDialog<bool>(
       context: context,
       builder: (BuildContext context) => AlertDialog(
@@ -83,8 +94,16 @@ class ViewMedicationScreen extends StatelessWidget {
     ) ?? false;
 
     if (confirm) {
-      await FirebaseFirestore.instance.collection('medications').doc(medicationId).delete();
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication deleted successfully')));
+      final User? user = _auth.currentUser;
+      if (user != null) {
+        await FirebaseFirestore.instance
+            .collection('users')
+            .doc(user.uid)
+            .collection('medications')
+            .doc(medicationId)
+            .delete();
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication deleted successfully')));
+      }
     }
   }
 }
