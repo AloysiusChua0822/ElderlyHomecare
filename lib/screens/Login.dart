@@ -118,28 +118,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     if (_isLoading)
                       CircularProgressIndicator()
                     else
-                      ElevatedButton(
-                        onPressed: _submitForm,
-                        child: Text('Login'),
-                        style: ElevatedButton.styleFrom(
-                          primary: Colors.black,
-                          minimumSize: Size.fromHeight(50),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => RegisterScreen()),
-                        );
-                      },
-                      child: Text('Create new account'),
-                    ),
-                  ],
-                ),
+            ElevatedButton(
+            onPressed: _submitForm,
+            style: ElevatedButton.styleFrom(
+              primary: Colors.deepPurple, // Background color of the button
+              minimumSize: Size.fromHeight(50), // Minimum size of the button
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12), // Rounded corners
+              ),
+            ),
+            child: Text(
+              'Login',
+              style: TextStyle(
+                color: Colors.white, // Text color
+              ),
+            ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => RegisterScreen()),
+              );
+            },
+            child: Text(
+              'Create new account',
+              style: TextStyle(
+                color: Colors.black, // Text color for TextButton
+              ),
+            ),
+          ),
+         ]
+        ),
               ),
             ),
           ),
