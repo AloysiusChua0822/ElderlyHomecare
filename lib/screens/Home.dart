@@ -7,12 +7,13 @@ import 'package:eldergit/screens/activityscreen.dart';
 import 'package:eldergit/screens/Login.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'Community.dart';
+import 'package:eldergit/screens/Community.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
   _HomeScreenState createState() => _HomeScreenState();
 }
+
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
@@ -24,6 +25,7 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _fetchUsername();
   }
+
 
   Future<void> _fetchUsername() async {
     final user = FirebaseAuth.instance.currentUser;
@@ -37,10 +39,22 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _onItemTapped(int index) {
-    setState(() {
-      _selectedIndex = index;
-    });
+    if (index == 1) { // Assuming Community is at index 1
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (context) => CommunityListScreen(), // Replace CommunityListScreen with the actual class name of your Community screen
+      ));
+    }
+    if (index == 2) { // Assuming Community is at index 1
+      Navigator.of(context).pushReplacement(MaterialPageRoute(
+        builder: (context) => const ChatScreen(), // Replace CommunityListScreen with the actual class name of your Community screen
+      ));
+    }else {
+      setState(() {
+        _selectedIndex = index;
+      });
+    }
   }
+
 
   Widget _getTabContent() {
     switch (_selectedIndex) {
@@ -60,6 +74,7 @@ class _HomeScreenState extends State<HomeScreen> {
     await FirebaseAuth.instance.signOut();
     Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => MainScreen())); // Assuming LoginScreen is your login screen.
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -159,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+
 
   Widget _bigButton(BuildContext context, IconData icon, String label, Color iconColor, Color cardColor, VoidCallback onTap) {
     return Card(
