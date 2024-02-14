@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:eldergit/classes/newsclass.dart'; // Import your NewsItem model
-import 'package:eldergit/screens/addnews.dart'; // Import your AddNewsScreen
+import 'package:eldergit/classes/newsclass.dart';
+import 'package:eldergit/screens/addnews.dart';
+import 'package:eldergit/screens/newsdetail.dart';
 
 class ViewNewsScreen extends StatefulWidget {
   @override
@@ -25,8 +26,12 @@ class _ViewNewsScreenState extends State<ViewNewsScreen> {
     _checkUserRole();
   }
 
+  Future<void> _deleteNews(String newsId) async {
+    await FirebaseFirestore.instance.collection('news').doc(newsId).delete();
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('News deleted successfully')));
+  }
+
   Future<void> _checkUserRole() async {
-    // Assuming you have a field in your users collection that marks charity workers
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final userData = await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
@@ -57,12 +62,41 @@ class _ViewNewsScreenState extends State<ViewNewsScreen> {
             itemCount: newsItems.length,
             itemBuilder: (context, index) {
               final item = newsItems[index];
-              return ListTile(
-                title: Text(item.title),
-                subtitle: Text(item.content),
+              return InkWell(
                 onTap: () {
-                  // Navigate to detail screen if needed
+                  Navigator.of(context).push(MaterialPageRoute(
+                    builder: (context) => NewsDetailScreen(newsItem: item),
+                  ));
                 },
+                child: Card(
+                  margin: EdgeInsets.all(8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (item.imageUrl.isNotEmpty)
+                        Image.network(item.imageUrl, width: double.infinity, height: 200, fit: BoxFit.cover),
+                      ListTile(
+                        title: Text(item.title, style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                        subtitle: Text(item.content),
+                        trailing: _isCharityWorker ? Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: Icon(Icons.edit),
+                              onPressed: () {
+                                Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddEditNewsScreen(newsItem: item)));
+                              },
+                            ),
+                            IconButton(
+                              icon: Icon(Icons.delete),
+                              onPressed: () => _deleteNews(item.id),
+                            ),
+                          ],
+                        ) : SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
+                ),
               );
             },
           );

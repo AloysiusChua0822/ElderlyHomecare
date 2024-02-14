@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:eldergit/screens/news.dart';
-import '../classes/newsclass.dart'; // Assuming this is your model class
+import '../classes/newsclass.dart'; // Update this import to your actual path
 
 class AddEditNewsScreen extends StatefulWidget {
   final NewsItem? newsItem;
@@ -19,6 +19,7 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _contentController;
+  late TextEditingController _descriptionController; // New controller for detailed description
   String? _imageUrl;
   File? _imageFile;
 
@@ -27,6 +28,7 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
     super.initState();
     _titleController = TextEditingController(text: widget.newsItem?.title ?? '');
     _contentController = TextEditingController(text: widget.newsItem?.content ?? '');
+    _descriptionController = TextEditingController(text: widget.newsItem?.description ?? ''); // Initialize with existing description if editing
     _imageUrl = widget.newsItem?.imageUrl;
   }
 
@@ -62,6 +64,7 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
     Map<String, dynamic> newsData = {
       'title': _titleController.text.trim(),
       'content': _contentController.text.trim(),
+      'description': _descriptionController.text.trim(), // Include the detailed description
       'imageUrl': imageUrl ?? '',
     };
 
@@ -98,6 +101,12 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
                   controller: _contentController,
                   decoration: InputDecoration(labelText: 'Content'),
                   validator: (value) => value!.isEmpty ? 'Please enter some content' : null,
+                ),
+                TextFormField(
+                  controller: _descriptionController,
+                  decoration: InputDecoration(labelText: 'Detailed Description'),
+                  maxLines: 3, // Allows for more text to be entered
+                  validator: (value) => value!.isEmpty ? 'Please enter a detailed description' : null,
                 ),
                 SizedBox(height: 20),
                 if (_imageUrl != null && _imageFile == null)
