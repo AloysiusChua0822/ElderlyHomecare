@@ -1,4 +1,5 @@
 import 'package:eldergit/screens/addmedication.dart';
+import 'package:eldergit/screens/chat.dart';
 import 'package:eldergit/screens/mainscreen.dart';
 import 'package:eldergit/screens/medication.dart';
 import 'package:flutter/material.dart';
@@ -46,7 +47,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return CommunityListScreen(); // Return the CommunityListScreen widget
       case 2:
-        return Text('Messages Content');
+        return ChatScreen();
       case 3:
         return Text('Profile Content');
       default:
