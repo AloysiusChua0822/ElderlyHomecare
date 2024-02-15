@@ -1,9 +1,7 @@
-import 'package:eldergit/screens/chat.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 // Import your screens
-import 'package:eldergit/screens/activityscreen.dart';
 import 'package:eldergit/screens/community.dart';
 import 'package:eldergit/screens/profile.dart';
 import 'package:eldergit/screens/mainscreen.dart';
@@ -19,31 +17,22 @@ class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
   String _username = ''; // Define username variable
   String _profilePicUrl = ''; // Define profilePicUrl variable
-
-
+  Stream<DocumentSnapshot>? _userStream;
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); // Implement this method to fetch user data
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      // Create a stream to listen for user data updates in real-time
+      _userStream = FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots();
+    }
   }
 
   void _onItemTapped(int index) {
     setState(() {
       _selectedIndex = index;
     });
-  }
-
-  Future<void> _fetchUserData() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user != null) {
-      final userData =
-      await FirebaseFirestore.instance.collection('users').doc(user.uid).get();
-      setState(() {
-        _username = userData.data()?['username'] ?? 'User';
-        _profilePicUrl = userData.data()?['image_url'] ?? 'User'; // Fetch profile picture URL
-      });
-    }
   }
 
   Future<void> _logout() async {
@@ -56,7 +45,11 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> _widgetOptions = [
       HomeContent(username: _username, profilePicUrl: _profilePicUrl),
       CommunityListScreen(),
+<<<<<<< HEAD
       ChatsScreen(),
+=======
+      ChatsScreen(), // Assuming you have a ChatsScreen
+>>>>>>> d83ab7d50c7be6d099b1d2e48956f777aa0ba202
       ProfileScreen(),
     ];
 
@@ -70,10 +63,19 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      // Use _widgetOptions to display the selected screen
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: _widgetOptions,
+      body: StreamBuilder<DocumentSnapshot>(
+        stream: _userStream,
+        builder: (context, snapshot) {
+          if (snapshot.hasData && snapshot.data!.exists) {
+            var userData = snapshot.data!;
+            _username = userData['username'] ?? 'User';
+            _profilePicUrl = userData['image_url'] ?? '';
+          }
+          return IndexedStack(
+            index: _selectedIndex,
+            children: _widgetOptions,
+          );
+        },
       ),
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
@@ -90,6 +92,3 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 }
-
-
-

@@ -111,9 +111,6 @@ class _AuthScreenState extends State<AuthScreen> {
                         children: [
                           if (!_isLogin)
                             UserImagePicker(
-                              onPickImage: (pickedImage) {
-                                _selectedImage = pickedImage;
-                              },
                             ),
                           TextFormField(
                             decoration: const InputDecoration(
