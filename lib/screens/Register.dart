@@ -69,6 +69,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           'email': _emailController.text.trim(),
           'image_url': imageUrl,
           'userType': _selectedUserType,
+          'password': _passwordController.text.trim(),
         });
 
         Navigator.pushAndRemoveUntil(
@@ -111,7 +112,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      UserImagePicker(onPickImage: _pickImage),
+                      UserImagePicker(),
                       TextFormField(
                         controller: _usernameController,
                         decoration: InputDecoration(
