@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -51,19 +52,24 @@ class CommunityListScreen extends StatelessWidget {
                   child: Padding(
                     padding: EdgeInsets.all(8),
                     child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        CircleAvatar(
-                          radius: 30,
-                          // Use AssetImage for default images
-                          backgroundImage: AssetImage('assets/logo.jpg'),
-                        ),
-                        SizedBox(width: 16),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                        Row(
                           children: [
-                            Text(groupData['name'], style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                            SizedBox(height: 4),
-                            Text(groupData['description'], style: TextStyle(fontSize: 14)),
+                            CircleAvatar(
+                              radius: 30,
+                              // Use AssetImage for default images
+                              backgroundImage: AssetImage('assets/logo.jpg'),
+                            ),
+                            SizedBox(width: 16),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(groupData['name'], style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                                SizedBox(height: 4),
+                                Text('Members: ${groupData['members'].length}'),
+                              ],
+                            ),
                           ],
                         ),
                       ],
@@ -109,9 +115,6 @@ class CommunityListScreen extends StatelessWidget {
     );
   }
 }
-
-
-
 
 class CreateCommunityScreen extends StatefulWidget {
   @override
@@ -258,172 +261,66 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
         centerTitle: true,
         leading: IconButton(
           icon: Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            Navigator.pop(context);
+          },
         ),
       ),
       body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            buildSectionTitle('Group Name'),
-            buildTextField(hint: 'Enter Group Name', controller: groupNameController),
-            buildSectionTitle('Description'),
-            buildTextField(hint: 'Enter Description', controller: groupDescriptionController),
-            buildSectionTitle('Category'),
-            buildDropdown(categories),
-            buildSectionTitle('Location'),
-            buildTextField(hint: 'Enter Location', controller: groupLocationController),
-            buildSectionTitle('Add Members'),
-            buildTextField(hint: 'Search', withIcon: true, controller: _searchController),
-            SizedBox(height: 24),
-            if (_searchController.text.isNotEmpty) buildSearchResults(),
+          children: [
+            TextFormField(
+              controller: groupNameController,
+              decoration: InputDecoration(labelText: 'Community Name'),
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: groupDescriptionController,
+              decoration: InputDecoration(labelText: 'Description'),
+              maxLines: 3,
+            ),
+            SizedBox(height: 16),
+            TextFormField(
+              controller: groupLocationController,
+              decoration: InputDecoration(labelText: 'Location'),
+            ),
+            SizedBox(height: 16),
             buildSelectedMembersSection(),
-            buildActionButtons(context),
+            TextFormField(
+              controller: _searchController,
+              decoration: InputDecoration(labelText: 'Search members'),
+            ),
+            SizedBox(height: 16),
+            buildSearchResults(),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: () async {
+                // Create the new community
+                String groupId = '';
+                try {
+                  DocumentReference groupRef = await FirebaseFirestore.instance.collection('groups').add({
+                    'name': groupNameController.text,
+                    'description': groupDescriptionController.text,
+                    'location': groupLocationController.text,
+                    'members': selectedUsers.map((user) => user['id']).toList(),
+                  });
+                  groupId = groupRef.id;
+                } catch (e) {
+                  print('Error creating group: $e');
+                }
+                if (groupId.isNotEmpty) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(builder: (context) => GroupChatScreen(groupId: groupId)),
+                  );
+                }
+              },
+              child: Text('Create Community'),
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Future<void> createCommunity() async {
-    if (groupNameController.text.isEmpty ||
-        groupDescriptionController.text.isEmpty ||
-        selectedUsers.isEmpty ||
-        categories == null ||
-        groupLocationController.text.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Please fill in all the fields and select at least one member."),
-      ));
-      return;
-    }
-
-    try {
-      DocumentReference groupDocRef = await FirebaseFirestore.instance.collection('groups').add({
-        'name': groupNameController.text,
-        'description': groupDescriptionController.text,
-        'category': categories,
-        'location': groupLocationController.text,
-        'members': selectedUsers.map((user) => user['id']).toList(),
-      });
-
-      await FirebaseFirestore.instance.collection('messages').add({
-        'groupId': groupDocRef.id,
-        'text': 'Welcome to the group!',
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Community created successfully!"),
-      ));
-
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => GroupChatScreen(groupId: groupDocRef.id)));
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-        content: Text("Failed to create community: $e"),
-      ));
-    }
-  }
-
-  Widget buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: Text(
-        title,
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.bold,
-          color: Colors.grey[800],
-        ),
-      ),
-    );
-  }
-
-  Widget buildTextField({required String hint, TextEditingController? controller, bool withIcon = false}) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: TextField(
-        controller: controller,
-        decoration: InputDecoration(
-          hintText: hint,
-          filled: true,
-          fillColor: Colors.grey[200],
-          contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-          border: OutlineInputBorder(
-            borderSide: BorderSide.none,
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide.none,
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.blue, width: 2.0),
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          prefixIcon: withIcon ? Icon(Icons.search, color: Colors.grey) : null,
-        ),
-        style: TextStyle(fontSize: 14),
-      ),
-    );
-  }
-
-  Widget buildDropdown(List<String> categories) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0),
-      child: DropdownButtonFormField(
-        decoration: InputDecoration(
-          filled: true,
-          fillColor: Colors.grey[200],
-          contentPadding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 10.0),
-          border: OutlineInputBorder(
-            borderSide: BorderSide.none,
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderSide: BorderSide.none,
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderSide: BorderSide(color: Colors.blue, width: 2.0),
-            borderRadius: BorderRadius.circular(10.0),
-          ),
-        ),
-        items: categories.map((String category) {
-          return DropdownMenuItem<String>(
-            value: category,
-            child: Text(category),
-          );
-        }).toList(),
-        onChanged: (String? value) {},
-      ),
-    );
-  }
-
-  Widget buildActionButtons(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 16.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: <Widget>[
-          ElevatedButton(
-            onPressed: createCommunity,
-            child: Text('Create Community'),
-            style: ElevatedButton.styleFrom(
-              primary: Colors.blue,
-              onPrimary: Colors.white,
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-            ),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Cancel'),
-            style: TextButton.styleFrom(
-              primary: Colors.blue,
-              padding: EdgeInsets.symmetric(horizontal: 30, vertical: 15),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -441,11 +338,38 @@ class GroupChatScreen extends StatefulWidget {
 class _GroupChatScreenState extends State<GroupChatScreen> {
   final TextEditingController _messageController = TextEditingController();
 
+  String _groupName = ''; // Variable to store the group name
+
+  @override
+  void initState() {
+    super.initState();
+    // Fetch the group name when the screen is initialized
+    _fetchGroupName();
+  }
+
+  // Method to fetch the group name from Firestore
+  Future<void> _fetchGroupName() async {
+    try {
+      DocumentSnapshot groupSnapshot = await FirebaseFirestore.instance
+          .collection('groups')
+          .doc(widget.groupId)
+          .get();
+      if (groupSnapshot.exists) {
+        Map<String, dynamic> groupData = groupSnapshot.data() as Map<String, dynamic>;
+        setState(() {
+          _groupName = groupData['name'] ?? ''; // Assign the group name to the variable
+        });
+      }
+    } catch (e) {
+      print('Error fetching group name: $e');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Group Chat'),
+        title: Text(_groupName), // Use the group name as the app bar title
       ),
       body: Column(
         children: [
@@ -459,24 +383,58 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
-                }
-
-                if (snapshot.hasError) {
+                } else if (snapshot.hasError) {
                   return Center(child: Text('Error: ${snapshot.error}'));
-                }
-
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                } else if (!snapshot.hasData) {
                   return Center(child: Text('No messages found'));
                 }
 
-                return ListView(
+                List<DocumentSnapshot> documents = snapshot.data!.docs;
+                return ListView.builder(
                   reverse: true,
-                  children: snapshot.data!.docs.map((document) {
-                    Map<String, dynamic> messageData = document.data()! as Map<String, dynamic>;
+                  itemCount: documents.length,
+                  itemBuilder: (context, index) {
+                    Map<String, dynamic> messageData =
+                    documents[index].data() as Map<String, dynamic>;
+
+                    // Determine if the message is sent by the current user
+                    final bool isCurrentUser =
+                        messageData['senderId'] == FirebaseAuth.instance.currentUser?.uid;
+
                     return ListTile(
-                      title: Text(messageData['text']),
+                      leading: CircleAvatar(
+                        backgroundImage: NetworkImage(
+                          messageData['image_url'] ?? '',
+                        ),
+                      ),
+                      title: Container(
+                        alignment: isCurrentUser
+                            ? Alignment.centerRight
+                            : Alignment.centerLeft,
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: isCurrentUser
+                                ? Colors.blue[100] // Your message bubble color
+                                : Colors.grey[300], // Other user's message bubble color
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          padding: EdgeInsets.all(8),
+                          margin: EdgeInsets.symmetric(vertical: 4),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (!isCurrentUser) Text(messageData['username'], style: TextStyle(fontWeight: FontWeight.bold)),
+                              SizedBox(height: 4),
+                              Text(
+                                messageData['text'],
+                                style: TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     );
-                  }).toList(),
+                  },
                 );
               },
             ),
@@ -510,20 +468,48 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     );
   }
 
+  // Method to fetch user's photo URL from Firestore
+  Future<String> _getUserPhotoUrl(String userId) async {
+    String photoUrl = ''; // Default photo URL
+
+    try {
+      DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
+      if (userSnapshot.exists) {
+        Map<String, dynamic> userData =
+        userSnapshot.data() as Map<String, dynamic>;
+        // Assuming the field name for the image URL is 'image'
+        photoUrl = userData['image_url'] ?? ''; // Get image URL from user data
+      }
+    } catch (e) {
+      print('Error fetching user photo URL: $e');
+    }
+
+    return photoUrl;
+  }
+
   void _sendMessage() async {
     if (_messageController.text.isNotEmpty) {
-      try {
+      User? user = FirebaseAuth.instance.currentUser; // Get current user
+      if (user != null) {
+        // Fetch user's photo URL from Firestore
+        String pictureUrl = await _getUserPhotoUrl(user.uid);
+
         await FirebaseFirestore.instance.collection('messages').add({
           'groupId': widget.groupId,
           'text': _messageController.text,
+          'senderId': user.uid, // Include sender's ID in the message
+          'username': user.displayName ?? 'Unknown',
+          // Use display name from Firebase Authentication
+          'image_url': pictureUrl,
           'timestamp': Timestamp.now(),
         });
         _messageController.clear();
-      } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Failed to send message: $e"),
-        ));
       }
     }
   }
 }
+
+
