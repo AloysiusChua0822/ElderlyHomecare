@@ -123,8 +123,7 @@ class _HomeContentState extends State<HomeContent> {
                   label: 'Appointments',
                   iconColor: Colors.white,
                   cardColor: Colors.purple,
-                  onTap: () {
-                    // Navigator.push(context, MaterialPageRoute(builder: (context) => AppointmentScreen()));
+                  onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context) => AppointmentScreen()));
                   },
                 ),              ],
             ),
