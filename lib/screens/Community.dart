@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,7 +21,7 @@ class CommunityListScreen extends StatelessWidget {
           IconButton(
             icon: Icon(Icons.search),
             onPressed: () {
-              // Implement search functionality
+              showSearch(context: context, delegate: GroupSearchDelegate());
             },
           ),
         ],
@@ -38,9 +40,10 @@ class CommunityListScreen extends StatelessWidget {
             itemCount: groups.length,
             itemBuilder: (context, index) {
               Map<String, dynamic> groupData = groups[index].data() as Map<String, dynamic>;
+              bool isMember = (groupData['members'] as List).contains(FirebaseAuth.instance.currentUser!.uid);
+
               return GestureDetector(
                 onTap: () {
-                  // Navigate to group chat screen with group ID
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => GroupChatScreen(groupId: groups[index].id)),
@@ -58,7 +61,6 @@ class CommunityListScreen extends StatelessWidget {
                           children: [
                             CircleAvatar(
                               radius: 30,
-                              // Use AssetImage for default images
                               backgroundImage: AssetImage('assets/logo.jpg'),
                             ),
                             SizedBox(width: 16),
@@ -71,6 +73,54 @@ class CommunityListScreen extends StatelessWidget {
                               ],
                             ),
                           ],
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.add),
+                          onPressed: () {
+                            if (isMember) {
+                              showDialog(
+                                context: context,
+                                builder: (BuildContext context) {
+                                  return AlertDialog(
+                                    title: Text("Already Joined"),
+                                    content: Text("You are already a member of this group."),
+                                    actions: [
+                                      TextButton(
+                                        child: Text("OK"),
+                                        onPressed: () {
+                                          Navigator.of(context).pop();
+                                        },
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            } else {
+                              FirebaseFirestore.instance.collection('groups').doc(groups[index].id).update({
+                                'members': FieldValue.arrayUnion([FirebaseAuth.instance.currentUser!.uid])
+                              }).then((value) {
+                                showDialog(
+                                  context: context,
+                                  builder: (BuildContext context) {
+                                    return AlertDialog(
+                                      title: Text("Joined Successfully"),
+                                      content: Text("You have successfully joined this group."),
+                                      actions: [
+                                        TextButton(
+                                          child: Text("OK"),
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                        ),
+                                      ],
+                                    );
+                                  },
+                                );
+                              }).catchError((error) {
+                                print('Error joining group: $error');
+                              });
+                            }
+                          },
                         ),
                       ],
                     ),
@@ -116,20 +166,102 @@ class CommunityListScreen extends StatelessWidget {
   }
 }
 
+
+
+class GroupSearchDelegate extends SearchDelegate<String> {
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      IconButton(
+        icon: Icon(Icons.clear),
+        onPressed: () {
+          query = '';
+        },
+      ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: Icon(Icons.arrow_back),
+      onPressed: () {
+        close(context, '');
+      },
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('groups')
+          .where('name', isEqualTo: query) // Filter groups by name
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('No groups found'));
+        }
+        List<DocumentSnapshot> groups = snapshot.data!.docs;
+        return ListView.builder(
+          itemCount: groups.length,
+          itemBuilder: (context, index) {
+            Map<String, dynamic> groupData = groups[index].data() as Map<String, dynamic>;
+            // Build UI for each group
+            return ListTile(
+              leading: CircleAvatar(
+                backgroundImage: NetworkImage(groupData['image_url'] ?? ''), // Assuming 'image_url' field contains image URL
+              ),
+              title: Text(groupData['name']),
+              subtitle: Text('Members: ${groupData['members'].length}'),
+              // Implement onTap to navigate to group details or chat screen
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => GroupChatScreen(groupId: groups[index].id)),
+                );
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  @override
+  Widget buildSuggestions(BuildContext context) {
+    return Container(); // Implement suggestions as the user types
+  }
+}
+
+
+
+
+
 class CreateCommunityScreen extends StatefulWidget {
   @override
   _CreateCommunityScreenState createState() => _CreateCommunityScreenState();
 }
 
 class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
-  final List<String> categories = ['Food', 'Healthcare', 'Public Chat', 'Other'];
+  final List<String> categories = [
+    'Food',
+    'Healthcare',
+    'Public Chat',
+    'Other'
+  ];
   final TextEditingController _searchController = TextEditingController();
-  late Future<List<DocumentSnapshot>> searchResultsFuture;
+  late Future<List<DocumentSnapshot>> searchResultsFuture = Future.value(
+      []); // Initialize here
   List<Map<String, dynamic>> selectedUsers = [];
 
   TextEditingController groupNameController = TextEditingController();
   TextEditingController groupDescriptionController = TextEditingController();
   TextEditingController groupLocationController = TextEditingController();
+  String? selectedCategory; // Variable to store the selected category
 
   @override
   void initState() {
@@ -167,6 +299,7 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
     }
   }
 
+
   Widget buildSearchResults() {
     return FutureBuilder<List<DocumentSnapshot>>(
       future: searchResultsFuture,
@@ -180,7 +313,8 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
         List<DocumentSnapshot> docs = snapshot.data!;
         List<Widget> userTiles = docs.map((doc) {
           Map<String, dynamic> userData = doc.data() as Map<String, dynamic>;
-          bool isSelected = selectedUsers.any((selectedUser) => selectedUser['id'] == doc.id);
+          bool isSelected = selectedUsers.any((
+              selectedUser) => selectedUser['id'] == doc.id);
           return ListTile(
             leading: CircleAvatar(
               backgroundImage: NetworkImage(userData['image_url'] ?? ''),
@@ -210,13 +344,15 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
               physics: NeverScrollableScrollPhysics(),
             ),
             SizedBox(height: 24),
-            Text('Selected Members:', style: TextStyle(fontWeight: FontWeight.bold)),
-            ...selectedUsers.map((user) => ListTile(
-              title: Text(user['username']),
-              leading: CircleAvatar(
-                backgroundImage: NetworkImage(user['image_url'] ?? ''),
-              ),
-            )),
+            Text('Selected Members:',
+                style: TextStyle(fontWeight: FontWeight.bold)),
+            ...selectedUsers.map((user) =>
+                ListTile(
+                  title: Text(user['username']),
+                  leading: CircleAvatar(
+                    backgroundImage: NetworkImage(user['image_url'] ?? ''),
+                  ),
+                )),
           ],
         );
       },
@@ -237,18 +373,21 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
           ),
         ),
-        ...selectedUsers.map((user) => ListTile(
-          leading: CircleAvatar(
-            backgroundImage: NetworkImage(user['image_url'] ?? ''),
-          ),
-          title: Text(user['username']),
-          trailing: IconButton(
-            icon: Icon(Icons.remove_circle_outline),
-            onPressed: () => setState(() {
-              selectedUsers.removeWhere((selected) => selected['id'] == user['id']);
-            }),
-          ),
-        )),
+        ...selectedUsers.map((user) =>
+            ListTile(
+              leading: CircleAvatar(
+                backgroundImage: NetworkImage(user['image_url'] ?? ''),
+              ),
+              title: Text(user['username']),
+              trailing: IconButton(
+                icon: Icon(Icons.remove_circle_outline),
+                onPressed: () =>
+                    setState(() {
+                      selectedUsers.removeWhere((selected) =>
+                      selected['id'] == user['id']);
+                    }),
+              ),
+            )),
       ],
     );
   }
@@ -265,6 +404,14 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
             Navigator.pop(context);
           },
         ),
+        actions: <Widget>[
+          IconButton(
+            icon: Icon(Icons.cancel),
+            onPressed: () {
+              Navigator.pop(context); // Navigate back to the previous screen
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -287,6 +434,28 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
               decoration: InputDecoration(labelText: 'Location'),
             ),
             SizedBox(height: 16),
+            // Category selection dropdown
+            DropdownButtonFormField<String>(
+              value: selectedCategory,
+              onChanged: (value) {
+                setState(() {
+                  selectedCategory = value;
+                });
+              },
+              items: categories.map((category) {
+                return DropdownMenuItem<String>(
+                  value: category,
+                  child: Text(category),
+                );
+              }).toList(),
+              decoration: InputDecoration(
+                labelText: 'Select Category',
+                border: OutlineInputBorder(),
+                filled: true,
+                fillColor: Colors.grey[200],
+              ),
+            ),
+            SizedBox(height: 16),
             buildSelectedMembersSection(),
             TextFormField(
               controller: _searchController,
@@ -300,10 +469,12 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
                 // Create the new community
                 String groupId = '';
                 try {
-                  DocumentReference groupRef = await FirebaseFirestore.instance.collection('groups').add({
+                  DocumentReference groupRef = await FirebaseFirestore.instance
+                      .collection('groups').add({
                     'name': groupNameController.text,
                     'description': groupDescriptionController.text,
                     'location': groupLocationController.text,
+                    'category': selectedCategory,
                     'members': selectedUsers.map((user) => user['id']).toList(),
                   });
                   groupId = groupRef.id;
@@ -313,7 +484,8 @@ class _CreateCommunityScreenState extends State<CreateCommunityScreen> {
                 if (groupId.isNotEmpty) {
                   Navigator.pushReplacement(
                     context,
-                    MaterialPageRoute(builder: (context) => GroupChatScreen(groupId: groupId)),
+                    MaterialPageRoute(builder: (context) =>
+                        GroupChatScreen(groupId: groupId)),
                   );
                 }
               },
@@ -334,6 +506,8 @@ class GroupChatScreen extends StatefulWidget {
   @override
   _GroupChatScreenState createState() => _GroupChatScreenState();
 }
+
+
 
 class _GroupChatScreenState extends State<GroupChatScreen> {
   final TextEditingController _messageController = TextEditingController();
@@ -452,16 +626,41 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
       child: Row(
         children: <Widget>[
           Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration.collapsed(
-                hintText: "Send a message...",
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
+              child: TextField(
+                controller: _messageController,
+                decoration: InputDecoration(
+                  hintText: "Send a message...",
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20.0),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
+                  contentPadding: EdgeInsets.symmetric(horizontal: 16.0),
+                ),
               ),
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.send),
-            onPressed: _sendMessage,
+          SizedBox(width: 8.0),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20.0),
+              onTap: _sendMessage,
+              child: Container(
+                padding: EdgeInsets.all(12.0),
+                decoration: BoxDecoration(
+                  color: Colors.blue,
+                  borderRadius: BorderRadius.circular(20.0),
+                ),
+                child: Icon(
+                  Icons.send,
+                  color: Colors.white,
+                ),
+              ),
+            ),
           ),
         ],
       ),
