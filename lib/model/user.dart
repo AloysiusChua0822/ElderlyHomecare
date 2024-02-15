@@ -1,28 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
 
 class UserModel{
-  final String uid;
-  final String name;
+
   final String email;
   final String image;
-  final DateTime lastActive;
-  final bool isOnline;
-
+  final String userType;
+  final String username;
   const UserModel(
-    {required this.uid,
-    required this.name,
+    {
     required this.email,
     required this.image,
-    required this.lastActive,
-    this.isOnline = false,
+    required this.userType,
+    required this.username,
   });
 
   factory UserModel.fromJson(Map<String,dynamic> json) =>
      UserModel(
-      uid: json['uid'], 
-      name: json['name'],
       email: json['email'],
-      image: json['image'],
-      lastActive: json['lastActivate'].toDate(),
+      image: json['image_url'],
+      userType: json['userType'],
+      username: json['username'],
     );
 }

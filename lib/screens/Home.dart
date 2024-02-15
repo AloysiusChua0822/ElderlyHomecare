@@ -8,6 +8,7 @@ import 'package:eldergit/screens/community.dart';
 import 'package:eldergit/screens/profile.dart';
 import 'package:eldergit/screens/mainscreen.dart';
 import 'package:eldergit/screens/homecontent.dart';
+import 'package:eldergit/screens/chats_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -55,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> _widgetOptions = [
       HomeContent(username: _username, profilePicUrl: _profilePicUrl),
       CommunityListScreen(),
-      ChatScreen(),
+      ChatsScreen(),
       ProfileScreen(),
     ];
 
