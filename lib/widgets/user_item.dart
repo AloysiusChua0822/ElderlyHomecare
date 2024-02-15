@@ -25,7 +25,7 @@ class _UserItemState extends State<UserItem>{
     ],
   ),
   title: Text(
-    widget.user.name,
+    widget.user.username,
     style: const TextStyle(
       color: Colors.black,
       fontSize: 18,

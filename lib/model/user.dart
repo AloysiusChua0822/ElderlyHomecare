@@ -1,21 +1,22 @@
 class UserModel{
-  final String uid;
-  final String name;
+
   final String email;
   final String image;
-
+  final String userType;
+  final String username;
   const UserModel(
-    {required this.uid,
-    required this.name,
+    {
     required this.email,
     required this.image,
+    required this.userType,
+    required this.username,
   });
 
   factory UserModel.fromJson(Map<String,dynamic> json) =>
      UserModel(
-      uid: json['uid'], 
-      name: json['username'],
       email: json['email'],
-      image: json['imageUrl'],
+      image: json['image_url'],
+      userType: json['userType'],
+      username: json['username'],
     );
 }
