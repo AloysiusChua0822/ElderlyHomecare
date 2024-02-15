@@ -4,8 +4,9 @@ class NewsItem {
   String content;
   String description;
   String imageUrl;
+  String linkurl;
 
-  NewsItem({this.id = '', required this.title, required this.content, required this.description, this.imageUrl = ''});
+  NewsItem({this.id = '', required this.title, required this.content, required this.description, required this.linkurl, this.imageUrl = ''});
 
   factory NewsItem.fromFirestore(Map<String, dynamic> firestoreDoc, String documentId) {
     return NewsItem(
@@ -13,7 +14,9 @@ class NewsItem {
       title: firestoreDoc['title'] ?? '',
       content: firestoreDoc['content'] ?? '',
       description: firestoreDoc['description'] ?? '',
+      linkurl: firestoreDoc['linkurl'] ?? '',
       imageUrl: firestoreDoc['imageUrl'] ?? '',
+
     );
   }
 
@@ -22,6 +25,7 @@ class NewsItem {
       'title': title,
       'content': content,
       'description': description,
+      'linkurl' : linkurl,
       'imageUrl': imageUrl,
     };
   }

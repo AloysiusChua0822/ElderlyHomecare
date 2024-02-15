@@ -19,7 +19,8 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
   final _formKey = GlobalKey<FormState>();
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  late TextEditingController _descriptionController; // New controller for detailed description
+  late TextEditingController _descriptionController;
+  late TextEditingController _linkurlController;
   String? _imageUrl;
   File? _imageFile;
 
@@ -28,7 +29,8 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
     super.initState();
     _titleController = TextEditingController(text: widget.newsItem?.title ?? '');
     _contentController = TextEditingController(text: widget.newsItem?.content ?? '');
-    _descriptionController = TextEditingController(text: widget.newsItem?.description ?? ''); // Initialize with existing description if editing
+    _descriptionController = TextEditingController(text: widget.newsItem?.description ?? '');
+    _linkurlController = TextEditingController(text: widget.newsItem?.linkurl ?? '');
     _imageUrl = widget.newsItem?.imageUrl;
   }
 
@@ -64,9 +66,10 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
     Map<String, dynamic> newsData = {
       'title': _titleController.text.trim(),
       'content': _contentController.text.trim(),
-      'description': _descriptionController.text.trim(), // Include the detailed description
+      'description': _descriptionController.text.trim(),
+      'linkurl': _linkurlController.text.trim(),
       'imageUrl': imageUrl ?? '',
-    };
+    };https://firebase.google.com/docs/cloud-messaging/flutter/client
 
     if (widget.newsItem == null) {
       // Add new news
@@ -103,12 +106,18 @@ class _AddEditNewsScreenState extends State<AddEditNewsScreen> {
                   validator: (value) => value!.isEmpty ? 'Please enter some content' : null,
                 ),
                 TextFormField(
+                  controller: _linkurlController,
+                  decoration: InputDecoration(labelText: 'Enter Link to Website'),
+                  validator: (value) => value!.isEmpty ? 'Please enter a detailed description' : null,
+                ),
+                TextFormField(
                   controller: _descriptionController,
                   decoration: InputDecoration(labelText: 'Detailed Description'),
                   maxLines: 3, // Allows for more text to be entered
                   validator: (value) => value!.isEmpty ? 'Please enter a detailed description' : null,
                 ),
                 SizedBox(height: 20),
+
                 if (_imageUrl != null && _imageFile == null)
                   Image.network(_imageUrl!, height: 200, width: double.infinity, fit: BoxFit.cover),
                 if (_imageFile != null)

@@ -5,6 +5,8 @@ import 'package:eldergit/classes/newsclass.dart';
 import 'package:eldergit/screens/addnews.dart';
 import 'package:eldergit/screens/newsdetail.dart';
 
+
+
 class ViewNewsScreen extends StatefulWidget {
   @override
   _ViewNewsScreenState createState() => _ViewNewsScreenState();
