@@ -9,7 +9,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 void main() {
   runApp(MaterialApp(
     home: CommunityListScreen(),
-  ));
+  )); //
 }
 
 class CommunityListScreen extends StatelessWidget {
