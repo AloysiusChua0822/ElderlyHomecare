@@ -11,6 +11,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:eldergit/screens/Community.dart';
 import 'package:eldergit/screens/Appointments.dart'; // Import the Appointments screen
+import 'package:eldergit/screens/chats_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   @override
@@ -47,7 +49,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ));
     } else if (index == 2) {
       Navigator.of(context).pushReplacement(MaterialPageRoute(
-        builder: (context) => const ChatScreen(),
+        builder: (context) => const ChatsScreen(),
       ));
     } else if (index == 4) { // Add condition for index 4 (Appointments)
       Navigator.of(context).pushReplacement(MaterialPageRoute(
@@ -65,7 +67,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return CommunityListScreen();
       case 2:
-        return ChatScreen();
+        return ChatsScreen();
       case 3:
         return Text('Profile Content');
       default:
