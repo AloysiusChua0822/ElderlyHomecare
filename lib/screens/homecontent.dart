@@ -11,6 +11,8 @@ class BigButton extends StatelessWidget {
   final Color iconColor;
   final Color cardColor;
   final VoidCallback onTap;
+  final double width;
+  final double height;
 
   const BigButton({
     Key? key,
@@ -19,6 +21,8 @@ class BigButton extends StatelessWidget {
     required this.iconColor,
     required this.cardColor,
     required this.onTap,
+    this.width = 120, // Default width
+    this.height = 150, // Default height
   }) : super(key: key);
 
   @override
@@ -28,14 +32,15 @@ class BigButton extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Container(
-          width: 120, // Fixed width for consistency
-          padding: EdgeInsets.symmetric(vertical: 16), // Adjust padding
+          width: width,
+          height: height,
+          padding: EdgeInsets.symmetric(vertical: 16),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon, size: 80, color: iconColor),
+              Icon(icon, size: 40, color: iconColor),
               SizedBox(height: 8),
-              Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 20, color: Colors.white)),
+              Text(label, textAlign: TextAlign.center, style: TextStyle(fontSize: 16, color: Colors.white)),
             ],
           ),
         ),
@@ -44,7 +49,7 @@ class BigButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
       ),
       elevation: 4,
-      margin: EdgeInsets.all(8), // Margin around each card
+      margin: EdgeInsets.all(8),
     );
   }
 }
@@ -103,6 +108,8 @@ class _HomeContentState extends State<HomeContent> {
                   iconColor: Colors.white,
                   cardColor: Colors.lightBlue,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ActivityScreen())),
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.2,
                 ),
                 BigButton(
                   icon: Icons.healing,
@@ -110,6 +117,8 @@ class _HomeContentState extends State<HomeContent> {
                   iconColor: Colors.white,
                   cardColor: Colors.green,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ViewMedicationScreen())),
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.2,
                 ),
                 BigButton(
                   icon: Icons.article,
@@ -117,15 +126,19 @@ class _HomeContentState extends State<HomeContent> {
                   iconColor: Colors.white,
                   cardColor: Colors.orangeAccent,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ViewNewsScreen())),
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.2,
                 ),
                 BigButton(
                   icon: Icons.event,
                   label: 'Appointments',
                   iconColor: Colors.white,
                   cardColor: Colors.purple,
-                  onTap: () {Navigator.push(context, MaterialPageRoute(builder: (context) => AppointmentScreen()));
-                  },
-                ),              ],
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AppointmentScreen())),
+                  width: MediaQuery.of(context).size.width * 0.6,
+                  height: MediaQuery.of(context).size.height * 0.2,
+                ),
+              ],
             ),
           ),
           Row(
