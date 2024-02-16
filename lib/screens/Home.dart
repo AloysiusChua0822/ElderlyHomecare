@@ -15,8 +15,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   int _selectedIndex = 0;
-  String _username = ''; // Define username variable
-  String _profilePicUrl = ''; // Define profilePicUrl variable
+  String _username = '';
+  String _profilePicUrl = '';
   Stream<DocumentSnapshot>? _userStream;
 
   @override
@@ -24,7 +24,6 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
-      // Create a stream to listen for user data updates in real-time
       _userStream = FirebaseFirestore.instance.collection('users').doc(user.uid).snapshots();
     }
   }
@@ -45,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> _widgetOptions = [
       HomeContent(username: _username, profilePicUrl: _profilePicUrl),
       CommunityListScreen(),
-      ChatsScreen(), // Assuming you have a ChatsScreen
+      ChatsScreen(),
       ProfileScreen(),
     ];
 

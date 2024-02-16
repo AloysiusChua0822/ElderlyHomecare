@@ -2,11 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:eldergit/screens/Login.dart';
 import 'package:eldergit/screens/Home.dart';
-import 'package:image_picker/image_picker.dart'; // For directly using ImagePicker if needed
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_storage/firebase_storage.dart';
-import 'package:eldergit/widgets/user_image_picker.dart'; // Make sure this path matches your project structure
+import 'package:eldergit/widgets/new_image_picker.dart'; // Make sure this path matches your project structure
 
 class RegisterScreen extends StatefulWidget {
   @override
@@ -24,11 +23,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   File? _userImageFile;
   bool _isLoading = false;
 
-  void _pickImage(File image) {
-    setState(() {
-      _userImageFile = image;
-    });
-  }
 
   Future<void> _trySubmit() async {
     final isValid = _formKey.currentState!.validate();
@@ -112,7 +106,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      UserImagePicker(),
+                      NewImagePicker(onImagePicked: (File pickedImage) {
+                        setState(() {
+                          _userImageFile = pickedImage;
+                        });
+                      }),
                       TextFormField(
                         controller: _usernameController,
                         decoration: InputDecoration(

@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eldergit/widgets/user_image_picker.dart';
+import 'package:eldergit/widgets/old_image_picker.dart';
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -86,7 +86,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: EdgeInsets.all(16),
         child: Column(
           children: [
-            UserImagePicker(),
+            OldImagePicker(),
             SizedBox(height: 20),
             _buildUsernameField(),
             _buildEmailField(),

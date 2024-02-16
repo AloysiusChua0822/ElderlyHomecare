@@ -22,20 +22,12 @@ class _ActivityScreenState extends State<ActivityScreen> {
 
   Future<String> _fetchCurrentUserType() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return ""; // No user logged in
+    if (user == null) return ""; // If no user login, testing purpose
     final userData = await _firestore.collection('users').doc(user.uid).get();
-    return userData.data()?['userType'] ?? ""; // Assuming 'userType' is the field name
+    return userData.data()?['userType'] ?? "";
   }
 
   Future<void> _showDeleteActivityDialog() async {
-    final userType = await _fetchCurrentUserType();
-    if (userType != "Charity Worker") {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Only Allowed Users can use this function.")),
-      );
-      return;
-    }
-
     final activitiesSnapshot = await _firestore.collection('activities').get();
     final activities = activitiesSnapshot.docs
         .map((doc) => Activity.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
@@ -94,7 +86,7 @@ class _ActivityScreenState extends State<ActivityScreen> {
           TextButton(
             onPressed: () async {
               await _firestore.collection('activities').doc(activityId).delete();
-              Navigator.of(context).pop(); // Dismiss the confirmation dialog
+              Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
                 SnackBar(content: Text("\"$activityTitle\" deleted successfully.")),
               );

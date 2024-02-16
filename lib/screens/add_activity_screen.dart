@@ -48,7 +48,7 @@ class _AddActivityScreenState extends State<AddActivityScreen> {
       TaskSnapshot taskSnapshot = await uploadTask;
       final imageUrl = await taskSnapshot.ref.getDownloadURL();
 
-      // Add activity to Firestore
+      // Add activity code
       await FirebaseFirestore.instance.collection('activities').add({
         'title': _titleController.text.trim(),
         'description': _descriptionController.text.trim(),
