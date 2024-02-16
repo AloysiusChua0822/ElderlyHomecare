@@ -222,7 +222,6 @@ class _ActivityScreenState extends State<ActivityScreen> {
             );
           } else {
             // Return an empty Container when user is not a "Charity Worker"
-            // or while the user type is still loading.
             return Container();
           }
         },
