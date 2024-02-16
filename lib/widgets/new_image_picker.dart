@@ -12,6 +12,8 @@ class NewImagePicker extends StatefulWidget {
 }
 
 class _NewImagePickerState extends State<NewImagePicker> {
+  File? _selectedImageFile;
+
   Future<void> _pickImage() async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(
@@ -22,6 +24,9 @@ class _NewImagePickerState extends State<NewImagePicker> {
 
     if (pickedImage != null) {
       File imageFile = File(pickedImage.path);
+      setState(() {
+        _selectedImageFile = imageFile;
+      });
       widget.onImagePicked(imageFile);
     }
   }
@@ -33,7 +38,9 @@ class _NewImagePickerState extends State<NewImagePicker> {
         CircleAvatar(
           radius: 40,
           backgroundColor: Colors.grey,
-          backgroundImage: const AssetImage('assets/old-avatar.png'),
+          backgroundImage: _selectedImageFile != null
+              ? FileImage(_selectedImageFile!) as ImageProvider<Object>
+              : const AssetImage('assets/old-avatar.png') as ImageProvider<Object>,
         ),
         TextButton.icon(
           onPressed: _pickImage,
