@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:eldergit/screens/Register.dart'; // Import the register screen to navigate to it
+import 'package:eldergit/screens/Register.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:eldergit/screens/Home.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';

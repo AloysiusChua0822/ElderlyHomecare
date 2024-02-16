@@ -3,7 +3,7 @@ class Medication {
   String name;
   String dosage;
   String frequency;
-  String? imageUrl; // Optional field for image URL
+  String? imageUrl;
 
   Medication({required this.id, required this.name, required this.dosage, required this.frequency, this.imageUrl});
 
@@ -22,7 +22,7 @@ class Medication {
       'name': name,
       'dosage': dosage,
       'frequency': frequency,
-      'imageUrl': imageUrl, // Include imageUrl in the map
+      'imageUrl': imageUrl,
     };
   }
 }
