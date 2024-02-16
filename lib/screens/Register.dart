@@ -178,8 +178,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         onPressed: _trySubmit,
                         child: Text('Register'),
                         style: ElevatedButton.styleFrom(
-                          primary: Colors.deepPurple,
-                          onPrimary: Colors.white,
+                          foregroundColor: Colors.white, backgroundColor: Colors.deepPurple,
                           minimumSize: Size(double.infinity, 50),
                         ),
                       ),

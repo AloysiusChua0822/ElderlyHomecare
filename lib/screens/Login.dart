@@ -121,7 +121,7 @@ class _LoginScreenState extends State<LoginScreen> {
             ElevatedButton(
             onPressed: _submitForm,
             style: ElevatedButton.styleFrom(
-              primary: Colors.deepPurple, // Background color of the button
+              backgroundColor: Colors.deepPurple, // Background color of the button
               minimumSize: Size.fromHeight(50), // Minimum size of the button
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12), // Rounded corners

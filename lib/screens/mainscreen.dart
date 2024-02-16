@@ -52,8 +52,7 @@ class MainScreen extends StatelessWidget {
                           MaterialPageRoute(builder: (context) => RegisterScreen()),
                         );                        },
                       style: ElevatedButton.styleFrom(
-                        primary: Colors.blue,
-                        onPrimary: Colors.white,
+                        foregroundColor: Colors.white, backgroundColor: Colors.blue,
                         minimumSize: Size(double.infinity, 50),
                       ),
                     ),
@@ -69,8 +68,7 @@ class MainScreen extends StatelessWidget {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        primary: Colors.teal,
-                        onPrimary: Colors.white,
+                        foregroundColor: Colors.white, backgroundColor: Colors.teal,
                         minimumSize: Size(double.infinity, 50),
                       ),
                     ),
