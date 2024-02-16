@@ -22,6 +22,8 @@ class _UserItemState extends State<UserItem>{
         radius: 30,
         backgroundImage: NetworkImage(widget.user.image),
       ),
+      CircleAvatar(
+      ),
     ],
   ),
   title: Text(

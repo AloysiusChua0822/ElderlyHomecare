@@ -43,15 +43,9 @@ dependencies:
   path: ^1.8.3
   firebase_messaging: ^14.7.15
   url_launcher: ^6.2.4
-<<<<<<< HEAD
   firebase_database: ^10.4.5
   flutter_contacts: ^1.1.7+1
   provider: ^6.1.1
-=======
-  provider: ^6.1.1
-  flutter_contacts: ^1.1.7+1
-  firebase_database: ^10.4.5
->>>>>>> d83ab7d50c7be6d099b1d2e48956f777aa0ba202
   timeago: ^3.6.1
 
 dev_dependencies:

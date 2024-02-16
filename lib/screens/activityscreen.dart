@@ -205,31 +205,35 @@ class _ActivityScreenState extends State<ActivityScreen> {
           );
         },
       ),
-      floatingActionButton: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          FloatingActionButton(
-            onPressed: () async {
-              final userType = await _fetchCurrentUserType();
-              if (userType == "Charity Worker") {
-                Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddActivityScreen()));
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text("Only Allowed Users can use this function.")),
-                );
-              }
-            },
-            child: Icon(Icons.add),
-            heroTag: "addActivity",
-          ),
-          SizedBox(height: 10),
-          FloatingActionButton(
-            onPressed: _showDeleteActivityDialog,
-            child: Icon(Icons.delete),
-            heroTag: "deleteActivity",
-            backgroundColor: Colors.red,
-          ),
-        ],
+      floatingActionButton: FutureBuilder<String>(
+        future: _fetchCurrentUserType(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done && snapshot.data == "Charity Worker") {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                FloatingActionButton(
+                  onPressed: () {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (context) => AddActivityScreen()));
+                  },
+                  child: Icon(Icons.add),
+                  heroTag: "addActivity",
+                ),
+                SizedBox(height: 10),
+                FloatingActionButton(
+                  onPressed: _showDeleteActivityDialog,
+                  child: Icon(Icons.delete),
+                  heroTag: "deleteActivity",
+                  backgroundColor: Colors.red,
+                ),
+              ],
+            );
+          } else {
+            // Return an empty Container when user is not a "Charity Worker"
+            // or while the user type is still loading.
+            return Container();
+          }
+        },
       ),
     );
   }

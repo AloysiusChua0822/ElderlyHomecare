@@ -4,6 +4,7 @@ class UserModel{
   final String image;
   final String userType;
   final String username;
+
   const UserModel(
     {
     required this.email,
