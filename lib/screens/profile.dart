@@ -2,7 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:eldergit/widgets/old_image_picker.dart'; // Assuming this is the correct import for the image picker widget
+import 'package:eldergit/widgets/old_image_picker.dart';
+
 
 class ProfileScreen extends StatefulWidget {
   @override
@@ -31,6 +32,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
   _loadUserProfile() async {
     if (user != null) {
       var userData = await _firestore.collection('users').doc(user!.uid).get();
+      if (!userData.exists) {
+        // If user document doesn't exist, create one
+        await _firestore.collection('users').doc(user!.uid).set({
+          'username': '', // Initialize with empty username
+          'email': user!.email,
+          // Add other fields as needed
+        });
+        userData = await _firestore.collection('users').doc(user!.uid).get(); // Retrieve newly created document
+      }
       setState(() {
         _usernameController.text = userData.data()?['username'] ?? '';
         _email = userData.data()?['email'] ?? '';
@@ -75,12 +85,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: Text('Profile'),
         actions: _isUpdated
-            ? [
-          IconButton(
-            icon: Icon(Icons.save),
-            onPressed: _updateUserProfile,
-          )
-        ]
+            ? [IconButton(icon: Icon(Icons.save), onPressed: _updateUserProfile)]
             : null,
       ),
       body: SingleChildScrollView(
@@ -99,17 +104,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
             _buildPasswordField(),
             _buildUserTypeField(),
             SizedBox(height: 20),
-            _buildHealthReportCard(), // Moved the health report card here
+            _buildHealthReportCard(context), // Pass context
           ],
         ),
       ),
     );
   }
 
-  Widget _buildHealthReportCard() {
-    return InkWell( // Use InkWell for tap recognition
+  Widget _buildHealthReportCard(BuildContext context) { // Accept context parameter
+    return InkWell(
       onTap: () {
-        _navigateToUserListScreen(context); // Navigate to the UserListScreen when tapped
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => HealthReportDetailsScreen(healthReportId: 'pass_the_health_report_id_here'), // Replace with actual ID
+          ),
+        );
       },
       child: Container(
         margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -156,12 +166,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ),
       ),
     );
-  }
-
-  void _navigateToUserListScreen(BuildContext context) {
-    Navigator.of(context).push(MaterialPageRoute(
-      builder: (context) => UserListScreen(), // The new screen you've created
-    ));
   }
 
   Widget _buildUsernameField() {
@@ -360,310 +364,298 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 
+class HealthReportDetailsScreen extends StatelessWidget {
+  final String healthReportId;
 
-
-class UserListScreen extends StatelessWidget {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
-  UserListScreen({Key? key}) : super(key: key);
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('User List', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.deepPurple,
-        iconTheme: IconThemeData(color: Colors.white),
-      ),
-      body: StreamBuilder(
-        stream: _firestore.collection('users').snapshots(),
-        builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(child: CircularProgressIndicator());
-          }
-          if (snapshot.hasError) {
-            return Center(child: Text('Error: ${snapshot.error}'));
-          }
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Text('No users found'));
-          }
-
-          List<DocumentSnapshot> users = snapshot.data!.docs;
-
-          return ListView.separated(
-            itemCount: users.length,
-            separatorBuilder: (context, index) => Divider(height: 1),
-            itemBuilder: (context, index) {
-              var userData = users[index].data() as Map<String, dynamic>;
-              String imageUrl = userData['image_url'] as String? ?? 'assets/logo.jpg';
-              String email = userData['email'] as String? ?? 'No email';
-              String username = userData['username'] as String? ?? 'No name';
-              String userType = userData['userType'] as String? ?? 'Regular User';
-
-              return Card(
-                elevation: 2,
-                margin: EdgeInsets.symmetric(vertical: 4, horizontal: 8),
-                child: ListTile(
-                  title: Text(
-                    username,
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Text(email),
-                  leading: CircleAvatar(
-                    backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-                    child: imageUrl.isEmpty ? Icon(Icons.person) : null,
-                    radius: 25,
-                  ),
-                  trailing: GestureDetector(
-                    onTap: () {
-                      _showUserInfoDialog(context, userData);
-                    },
-                    child: Icon(Icons.info_outline, color: Colors.deepPurple),
-                  ),
-                  onTap: () {
-                    if (userType == 'Health Personnel') {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => UserDetailsScreen(
-                            userData: userData,
-                            canEditMedications: true,
-                          ),
-                        ),
-                      );
-                    } else {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => UserDetailsScreen(
-                            userData: userData,
-                            canEditMedications: false,
-                          ),
-                        ),
-                      );
-                    }
-                  },
-                ),
-              );
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  void _showUserInfoDialog(BuildContext context, Map<String, dynamic> userData) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('User Information'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Text('Username: ${userData['username'] ?? 'Not available'}'),
-            Text('Email: ${userData['email'] ?? 'Not available'}'),
-            Text('User Type: ${userData['userType'] ?? 'Not available'}'),
-          ],
-        ),
-        actions: <Widget>[
-          TextButton(
-            child: Text('Okay'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-class UserDetailsScreen extends StatelessWidget {
-  final Map<String, dynamic> userData;
-  final bool canEditMedications;
-
-  UserDetailsScreen({required this.userData, required this.canEditMedications});
-
-  @override
-  Widget build(BuildContext context) {
-    String username = userData['username'] as String? ?? 'No Name';
-    String email = userData['email'] as String? ?? 'No Email';
-    String imageUrl = userData['image_url'] as String? ?? '';
-    String userType = userData['userType'] as String? ?? 'Regular User';
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('User Details'),
-      ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          SizedBox(height: 30),
-          CircleAvatar(
-            radius: 80,
-            backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-            backgroundColor: Colors.grey[200],
-            child: imageUrl.isEmpty ? Icon(Icons.person, size: 80) : null,
-          ),
-          SizedBox(height: 20),
-          Text(
-            username,
-            style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
-          ),
-          SizedBox(height: 10),
-          Text(
-            email,
-            style: TextStyle(fontSize: 18, color: Colors.grey),
-          ),
-          SizedBox(height: 30),
-          Divider(
-            thickness: 2,
-            indent: 50,
-            endIndent: 50,
-          ),
-          SizedBox(height: 20),
-          Expanded(
-            child: Container(
-              margin: EdgeInsets.symmetric(horizontal: 20),
-              padding: EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.teal[50],
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    'Medication Information',
-                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-                    textAlign: TextAlign.center,
-                  ),
-                  SizedBox(height: 20),
-                  // Display medication information only for Health Personnel and those who can edit medications
-                  if (userType == 'Health Personnel' && canEditMedications)
-                    MedicationList(userId: userData['userId'], currentUserType: userType)
-                  else
-                    Column(
-                      children: [
-                        Text(
-                          'Only Health Personnel can access medication information.',
-                          style: TextStyle(fontSize: 18),
-                          textAlign: TextAlign.center,
-                        ),
-                        SizedBox(height: 10),
-                        if (!canEditMedications)
-                          Text(
-                            'You do not have permission to edit medications.',
-                            style: TextStyle(fontSize: 18),
-                            textAlign: TextAlign.center,
-                          ),
-                      ],
-                    ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class MedicationList extends StatelessWidget {
-  final String userId;
-  final String currentUserType;
-
-  MedicationList({required this.userId, required this.currentUserType});
+  HealthReportDetailsScreen({required this.healthReportId});
 
   @override
   Widget build(BuildContext context) {
     final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-    return StreamBuilder(
-      stream: _firestore.collection('medications').where('userId', isEqualTo: userId).snapshots(),
-      builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Health Report Details'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NewMedicalRecordScreen(),
+                ),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            FutureBuilder<DocumentSnapshot>(
+              future: _firestore.collection('users').doc(user!.uid).get(),
+              builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Text("Error: ${snapshot.error}");
+                }
+                if (!snapshot.hasData || snapshot.data?.data() == null) {
+                  return Text('User data not found');
+                }
+                Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
+                String username = userData?['username'] ?? '';
+                String imageUrl = userData?['image_url'] ?? '';
+
+                return Column(
+                  children: [
+                    Center(
+                      child: imageUrl.isNotEmpty
+                          ? OldImagePicker() // Use OldImagePicker or any other widget to display the user's photo
+                          : Text('No profile picture available'),
+                    ),
+                    SizedBox(height: 20),
+                    Text(
+                      'Username: $username',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                );
+              },
+            ),
+            SizedBox(height: 20),
+            _buildMedicationsList(_firestore), // Pass _firestore to _buildMedicationsList
+            SizedBox(height: 20),
+            _buildMedicalRecordsList(_firestore, user!.uid), // Add medical records section
+          ],
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildMedicationsList(FirebaseFirestore firestore) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: firestore.collection('medications').snapshots(), // Use firestore instead of _firestore
+      builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
         }
-        if (snapshot.hasError) {
-          return Center(child: Text('Error: ${snapshot.error}'));
-        }
         if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-          return Center(child: Text('No medications found'));
+          return Center(child: Text('No medications found.'));
         }
 
-        List<DocumentSnapshot> medications = snapshot.data!.docs;
+        List<Medication> medications = snapshot.data!.docs
+            .map((doc) => Medication.fromFirestore(doc.data() as Map<String, dynamic>))
+            .toList();
 
         return ListView.builder(
           shrinkWrap: true,
           physics: NeverScrollableScrollPhysics(),
           itemCount: medications.length,
           itemBuilder: (context, index) {
-            var medicationData = medications[index].data() as Map<String, dynamic>;
-            return ListTile(
-              leading: Image.network(medicationData['imageUrl'] ?? '', fit: BoxFit.cover, width: 50, height: 50),
-              title: Text(medicationData['medicationName'] ?? 'No Name'),
-              subtitle: Text('Dosage: ${medicationData['dosage'] ?? 'No Dosage'}'),
-              trailing: Text('Frequency: ${medicationData['frequency'] ?? 'No Frequency'}'),
-              onTap: () {
-                if (currentUserType == 'Health Personnel') {
-                  _editMedication(context, medications[index]);
-                }
-              },
+            Medication medication = medications[index];
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 8),
+              child: ListTile(
+                leading: Image.network(
+                  medication.imageUrl,
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                ),
+                title: Text(medication.name),
+                subtitle: Text('Dosage: ${medication.dosage}\nFrequency: ${medication.frequency}'),
+              ),
             );
           },
         );
       },
     );
   }
+}
 
-  void _editMedication(BuildContext context, DocumentSnapshot medicationSnapshot) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Edit Medication'),
-        content: SingleChildScrollView(
+Widget _buildMedicalRecordsList(FirebaseFirestore firestore, String userId) {return StreamBuilder<DocumentSnapshot>(
+  stream: firestore.collection('medical_records').doc(userId).snapshots(), // Stream for the user's medical records
+  builder: (context, snapshot) {
+    if (snapshot.connectionState == ConnectionState.waiting) {
+      return Center(child: CircularProgressIndicator());
+    }
+    if (!snapshot.hasData || !snapshot.data!.exists) {
+      return Center(child: Text('No medical records found.'));
+    }
+
+    // Print the data retrieved from Firestore
+    print('Medical Record Data: ${snapshot.data!.data()}');
+
+    // Extract medical record data
+    Map<String, dynamic> medicalRecordData = snapshot.data!.data() as Map<String, dynamic>;
+    String username = medicalRecordData?['username'] ?? '';
+    String blood = medicalRecordData?['blood'] ?? '';
+    String height = medicalRecordData?['height'] ?? '';
+    String weight = medicalRecordData?['weight'] ?? '';
+    String pressure = medicalRecordData?['pressure'] ?? '';
+    String cardiologist = medicalRecordData?['cardiologist'] ?? '';
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'medical_records',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        ),
+        SizedBox(height: 10),
+        Text('Username: $username'),
+        Text('Blood: $blood'),
+        Text('Height: $height'),
+        Text('Weight: $weight'),
+        Text('Pressure: $pressure'),
+        Text('Cardiologist: $cardiologist'),
+      ],
+    );
+  },
+);
+}
+
+
+
+class Medication {
+  final String name;
+  final String dosage;
+  final String frequency;
+  final String imageUrl;
+
+  Medication({required this.name, required this.dosage, required this.frequency, required this.imageUrl});
+
+  factory Medication.fromFirestore(Map<String, dynamic> firestore) {
+    return Medication(
+      name: firestore['name'] ?? '',
+      dosage: firestore['dosage'] ?? '',
+      frequency: firestore['frequency'] ?? '',
+      imageUrl: firestore['imageUrl'] ?? '',
+    );
+  }
+}
+class NewMedicalRecordScreen extends StatefulWidget {
+  @override
+  _NewMedicalRecordScreenState createState() => _NewMedicalRecordScreenState();
+}
+
+class _NewMedicalRecordScreenState extends State<NewMedicalRecordScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final _bloodController = TextEditingController();
+  final _heightController = TextEditingController();
+  final _weightController = TextEditingController();
+  final _pressureController = TextEditingController();
+  final _cardiologistController = TextEditingController();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('New Medical Record'),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Form(
+          key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TextFormField(
-                initialValue: medicationSnapshot['medicationName'],
-                decoration: InputDecoration(labelText: 'Medication Name'),
-                onChanged: (value) {
-                  // Update medication name
+                controller: _bloodController,
+                decoration: InputDecoration(labelText: 'Blood'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter blood information';
+                  }
+                  return null;
                 },
               ),
               TextFormField(
-                initialValue: medicationSnapshot['dosage'],
-                decoration: InputDecoration(labelText: 'Dosage'),
-                onChanged: (value) {
-                  // Update dosage
+                controller: _heightController,
+                decoration: InputDecoration(labelText: 'Height'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter height information';
+                  }
+                  return null;
                 },
               ),
               TextFormField(
-                initialValue: medicationSnapshot['frequency'],
-                decoration: InputDecoration(labelText: 'Frequency'),
-                onChanged: (value) {
-                  // Update frequency
+                controller: _weightController,
+                decoration: InputDecoration(labelText: 'Weight'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter weight information';
+                  }
+                  return null;
                 },
+              ),
+              TextFormField(
+                controller: _pressureController,
+                decoration: InputDecoration(labelText: 'Pressure'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter pressure information';
+                  }
+                  return null;
+                },
+              ),
+              TextFormField(
+                controller: _cardiologistController,
+                decoration: InputDecoration(labelText: 'Cardiologist'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Please enter cardiologist information';
+                  }
+                  return null;
+                },
+              ),
+              SizedBox(height: 20),
+              ElevatedButton(
+                onPressed: () {
+                  if (_formKey.currentState!.validate()) {
+                    _submitMedicalRecord();
+                  }
+                },
+                child: Text('Submit'),
               ),
             ],
           ),
         ),
-        actions: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () {
-              // Save changes
-              // Implement save functionality
-              Navigator.of(context).pop();
-            },
-            child: Text('Save'),
-          ),
-        ],
       ),
     );
+  }
+  void _submitMedicalRecord() {
+    // Add code to submit the medical record to Firestore
+    String blood = _bloodController.text;
+    String height = _heightController.text;
+    String weight = _weightController.text;
+    String pressure = _pressureController.text;
+    String cardiologist = _cardiologistController.text;
+
+    // Insert into Firestore
+    FirebaseFirestore.instance.collection('medical_records').add({
+      'userId': FirebaseAuth.instance.currentUser!.uid,
+      'blood': blood,
+      'height': height,
+      'weight': weight,
+      'pressure': pressure,
+      'cardiologist': cardiologist,
+      // Add other fields as needed
+    }).then((value) {
+      // Handle success
+      Navigator.pop(context); // Navigate back to previous screen
+    }).catchError((error) {
+      // Handle error
+      print('Failed to add medical record: $error');
+      // Optionally, show error message to user
+    });
   }
 }
