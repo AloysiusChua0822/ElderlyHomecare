@@ -362,8 +362,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
 
 
-
-
 class UserListScreen extends StatelessWidget {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
@@ -378,10 +376,7 @@ class UserListScreen extends StatelessWidget {
         iconTheme: IconThemeData(color: Colors.white),
       ),
       body: StreamBuilder(
-        stream: _firestore
-            .collection('users')
-            .where('userType', isNotEqualTo: 'Health Personnel')
-            .snapshots(),
+        stream: _firestore.collection('users').snapshots(),
         builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
@@ -399,10 +394,11 @@ class UserListScreen extends StatelessWidget {
             itemCount: users.length,
             separatorBuilder: (context, index) => Divider(height: 1),
             itemBuilder: (context, index) {
-              var userData = users[index].data() as Map<String, dynamic>?;
-              String imageUrl = userData?['image_url'] as String? ?? ''; // Null check and default value
-              String email = userData?['email'] as String? ?? 'No email';
-              String username = userData?['username'] as String? ?? 'No name';
+              var userData = users[index].data() as Map<String, dynamic>;
+              String imageUrl = userData['image_url'] as String? ?? 'assets/logo.jpg';
+              String email = userData['email'] as String? ?? 'No email';
+              String username = userData['username'] as String? ?? 'No name';
+              String userType = userData['userType'] as String? ?? 'Regular User';
 
               return Card(
                 elevation: 2,
@@ -418,26 +414,31 @@ class UserListScreen extends StatelessWidget {
                     child: imageUrl.isEmpty ? Icon(Icons.person) : null,
                     radius: 25,
                   ),
-                  trailing: Wrap(
-                    spacing: 12, // space between two icons
-                    children: <Widget>[
-                      GestureDetector(
-                        child: Icon(Icons.info_outline, color: Colors.deepPurple),
-                        onTap: () {
-                          if (userData != null) {
-                            _showUserInfoDialog(context, userData);
-                          }
-                        },
-                      ),
-                      Icon(Icons.settings, color: Colors.deepPurple), // Settings icon
-                    ],
+                  trailing: GestureDetector(
+                    onTap: () {
+                      _showUserInfoDialog(context, userData);
+                    },
+                    child: Icon(Icons.info_outline, color: Colors.deepPurple),
                   ),
                   onTap: () {
-                    if (userData != null) {
+                    if (userType == 'Health Personnel') {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => UserDetailsScreen(userData: userData),
+                          builder: (context) => UserDetailsScreen(
+                            userData: userData,
+                            canEditMedications: true,
+                          ),
+                        ),
+                      );
+                    } else {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => UserDetailsScreen(
+                            userData: userData,
+                            canEditMedications: false,
+                          ),
                         ),
                       );
                     }
@@ -469,7 +470,7 @@ class UserListScreen extends StatelessWidget {
           TextButton(
             child: Text('Okay'),
             onPressed: () {
-              Navigator.of(context).pop(); // Dismiss the dialog
+              Navigator.of(context).pop();
             },
           ),
         ],
@@ -477,18 +478,18 @@ class UserListScreen extends StatelessWidget {
     );
   }
 }
-
 class UserDetailsScreen extends StatelessWidget {
   final Map<String, dynamic> userData;
+  final bool canEditMedications;
 
-  UserDetailsScreen({required this.userData});
+  UserDetailsScreen({required this.userData, required this.canEditMedications});
 
   @override
   Widget build(BuildContext context) {
-    // Extracting user data
     String username = userData['username'] as String? ?? 'No Name';
     String email = userData['email'] as String? ?? 'No Email';
     String imageUrl = userData['image_url'] as String? ?? '';
+    String userType = userData['userType'] as String? ?? 'Regular User';
 
     return Scaffold(
       appBar: AppBar(
@@ -538,17 +539,26 @@ class UserDetailsScreen extends StatelessWidget {
                     textAlign: TextAlign.center,
                   ),
                   SizedBox(height: 20),
-                  userData.containsKey('medications')
-                      ? Text(
-                    userData['medications'],
-                    style: TextStyle(fontSize: 18),
-                    textAlign: TextAlign.center,
-                  )
-                      : Text(
-                    'No medication information available',
-                    style: TextStyle(fontSize: 18),
-                    textAlign: TextAlign.center,
-                  ),
+                  // Display medication information only for Health Personnel and those who can edit medications
+                  if (userType == 'Health Personnel' && canEditMedications)
+                    MedicationList(userId: userData['userId'], currentUserType: userType)
+                  else
+                    Column(
+                      children: [
+                        Text(
+                          'Only Health Personnel can access medication information.',
+                          style: TextStyle(fontSize: 18),
+                          textAlign: TextAlign.center,
+                        ),
+                        SizedBox(height: 10),
+                        if (!canEditMedications)
+                          Text(
+                            'You do not have permission to edit medications.',
+                            style: TextStyle(fontSize: 18),
+                            textAlign: TextAlign.center,
+                          ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -559,10 +569,9 @@ class UserDetailsScreen extends StatelessWidget {
   }
 }
 
-
 class MedicationList extends StatelessWidget {
   final String userId;
-  final String currentUserType; // Add currentUserType
+  final String currentUserType;
 
   MedicationList({required this.userId, required this.currentUserType});
 
@@ -570,10 +579,7 @@ class MedicationList extends StatelessWidget {
   Widget build(BuildContext context) {
     final FirebaseFirestore _firestore = FirebaseFirestore.instance;
     return StreamBuilder(
-      stream: _firestore
-          .collection('medications')
-          .where('userId', isEqualTo: userId)
-          .snapshots(),
+      stream: _firestore.collection('medications').where('userId', isEqualTo: userId).snapshots(),
       builder: (context, AsyncSnapshot<QuerySnapshot> snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -600,7 +606,6 @@ class MedicationList extends StatelessWidget {
               trailing: Text('Frequency: ${medicationData['frequency'] ?? 'No Frequency'}'),
               onTap: () {
                 if (currentUserType == 'Health Personnel') {
-                  // Implement edit functionality
                   _editMedication(context, medications[index]);
                 }
               },
@@ -612,18 +617,14 @@ class MedicationList extends StatelessWidget {
   }
 
   void _editMedication(BuildContext context, DocumentSnapshot medicationSnapshot) {
-    // Implement edit medication dialog
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text('Edit Medication'),
-        // Add form fields to edit medication details
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Add form fields for editing medication details
-              // For example:
               TextFormField(
                 initialValue: medicationSnapshot['medicationName'],
                 decoration: InputDecoration(labelText: 'Medication Name'),
