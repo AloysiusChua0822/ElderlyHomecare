@@ -5,6 +5,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:eldergit/classes/medicationclass.dart';
 import 'package:eldergit/screens/addmedication.dart';
 
+
+
+
 class ViewMedicationScreen extends StatelessWidget {
   final FirebaseAuth _auth = FirebaseAuth.instance; // FirebaseAuth instance
 
@@ -12,9 +15,8 @@ class ViewMedicationScreen extends StatelessWidget {
     final User? user = _auth.currentUser;
     if (user != null) {
       return FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .collection('medications')
+          .collection('medications') // Query the 'medications' collection directly
+          .where('userId', isEqualTo: user.uid) // Filter by the current user's ID
           .snapshots()
           .map((snapshot) => snapshot.docs
           .map((doc) => Medication.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
@@ -97,8 +99,6 @@ class ViewMedicationScreen extends StatelessWidget {
       final User? user = _auth.currentUser;
       if (user != null) {
         await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
             .collection('medications')
             .doc(medicationId)
             .delete();

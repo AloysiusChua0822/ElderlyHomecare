@@ -60,14 +60,18 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
     if (_formKey.currentState!.validate()) {
       String? imageUrl;
       if (_imageFile != null) {
+        // Upload new image and get the URL
         imageUrl = await _uploadImage(_imageFile!);
+      } else {
+        // If no new image is selected, keep the existing image URL
+        imageUrl = widget.medication?.imageUrl;
       }
 
       Map<String, dynamic> medicationData = {
         'name': _nameController.text,
         'dosage': _dosageController.text,
         'frequency': _frequencyController.text,
-        'imageUrl': imageUrl ?? '',
+        'imageUrl': imageUrl ?? '', // Use the new or existing image URL
       };
 
       try {
@@ -76,12 +80,15 @@ class _AddMedicationScreenState extends State<AddMedicationScreen> {
           String userId = currentUser.uid; // User ID
 
           if (widget.medication == null) {
-            // Adding new medication under user's sub-collection
-            await FirebaseFirestore.instance.collection('users').doc(userId).collection('medications').add(medicationData);
+            // Adding new medication to the 'medications' collection
+            await FirebaseFirestore.instance.collection('medications').add({
+              'userId': userId, // Associate the medication with the user
+              ...medicationData,
+            });
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication added successfully')));
           } else {
-            // Updating existing medication under user's sub-collection
-            await FirebaseFirestore.instance.collection('users').doc(userId).collection('medications').doc(widget.medication!.id).update(medicationData);
+            // Updating existing medication in the 'medications' collection
+            await FirebaseFirestore.instance.collection('medications').doc(widget.medication!.id).update(medicationData);
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Medication updated successfully')));
           }
         }
