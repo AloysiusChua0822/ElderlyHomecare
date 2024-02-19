@@ -3,12 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class NewMessage extends StatefulWidget {
-  const NewMessage({super.key});
+  final String receiverId;
+
+  const NewMessage({required this.receiverId, Key? key}) : super(key: key);
 
   @override
-  State<NewMessage> createState() {
-    return _NewMessageState();
-  }
+  _NewMessageState createState() => _NewMessageState();
 }
 
 class _NewMessageState extends State<NewMessage> {
@@ -42,6 +42,7 @@ class _NewMessageState extends State<NewMessage> {
       'userId': user.uid,
       'username': userData.data()!['username'],
       'userImage': userData.data()!['image_url'],
+      'receiverId': widget.receiverId + user.uid,
     });
   }
 
