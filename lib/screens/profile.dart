@@ -364,6 +364,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 
+
 class HealthReportDetailsScreen extends StatelessWidget {
   final String healthReportId;
 
@@ -378,6 +379,28 @@ class HealthReportDetailsScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Health Report Details'),
         actions: [
+          IconButton(
+            icon: Icon(Icons.people),
+            onPressed: () {
+              // Check if user is health personnel
+              if (user != null && isHealthPersonnel(user)) {
+                // Navigate to screen displaying all users except health personnel
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => UserProfilesScreen(),
+                  ),
+                );
+              } else {
+                // Display message for non-health personnel users
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text('You do not have access to view user profiles.'),
+                  ),
+                );
+              }
+            },
+          ),
           IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
@@ -398,7 +421,8 @@ class HealthReportDetailsScreen extends StatelessWidget {
           children: [
             FutureBuilder<DocumentSnapshot>(
               future: _firestore.collection('users').doc(user!.uid).get(),
-              builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+              builder: (BuildContext context,
+                  AsyncSnapshot<DocumentSnapshot> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return Center(child: CircularProgressIndicator());
                 }
@@ -408,7 +432,8 @@ class HealthReportDetailsScreen extends StatelessWidget {
                 if (!snapshot.hasData || snapshot.data?.data() == null) {
                   return Text('User data not found');
                 }
-                Map<String, dynamic> userData = snapshot.data!.data() as Map<String, dynamic>;
+                Map<String, dynamic> userData =
+                snapshot.data!.data() as Map<String, dynamic>;
                 String username = userData?['username'] ?? '';
                 String imageUrl = userData?['image_url'] ?? '';
 
@@ -429,19 +454,26 @@ class HealthReportDetailsScreen extends StatelessWidget {
               },
             ),
             SizedBox(height: 20),
-            _buildMedicationsList(_firestore), // Pass _firestore to _buildMedicationsList
+            _buildMedicationsList(_firestore, user!),
             SizedBox(height: 20),
-            _buildMedicalRecordsList(_firestore, user!.uid), // Add medical records section
+            _buildMedicalRecordsList(_firestore, user.uid),
           ],
         ),
       ),
     );
   }
 
+  bool isHealthPersonnel(User user) {
 
-  Widget _buildMedicationsList(FirebaseFirestore firestore) {
+    return false; // Placeholder logic, replace with actual implementation
+  }
+
+  Widget _buildMedicationsList(FirebaseFirestore firestore, User user) {
     return StreamBuilder<QuerySnapshot>(
-      stream: firestore.collection('medications').snapshots(), // Use firestore instead of _firestore
+      stream: firestore
+          .collection('medications')
+          .where('userId', isEqualTo: user.uid) // Filter by user ID
+          .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return Center(child: CircularProgressIndicator());
@@ -451,78 +483,135 @@ class HealthReportDetailsScreen extends StatelessWidget {
         }
 
         List<Medication> medications = snapshot.data!.docs
-            .map((doc) => Medication.fromFirestore(doc.data() as Map<String, dynamic>))
+            .map((doc) =>
+            Medication.fromFirestore(doc.data() as Map<String, dynamic>))
             .toList();
 
-        return ListView.builder(
-          shrinkWrap: true,
-          physics: NeverScrollableScrollPhysics(),
-          itemCount: medications.length,
-          itemBuilder: (context, index) {
-            Medication medication = medications[index];
-            return Card(
-              margin: EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                leading: Image.network(
-                  medication.imageUrl,
-                  width: 50,
-                  height: 50,
-                  fit: BoxFit.cover,
-                ),
-                title: Text(medication.name),
-                subtitle: Text('Dosage: ${medication.dosage}\nFrequency: ${medication.frequency}'),
-              ),
-            );
-          },
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Medications',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            SizedBox(height: 10),
+            ListView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              itemCount: medications.length,
+              itemBuilder: (context, index) {
+                Medication medication = medications[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: Image.network(
+                      medication.imageUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    ),
+                    title: Text(medication.name),
+                    subtitle: Text(
+                        'Dosage: ${medication.dosage}\nFrequency: ${medication
+                            .frequency}'),
+                  ),
+                );
+              },
+            ),
+          ],
         );
       },
     );
   }
-}
 
-Widget _buildMedicalRecordsList(FirebaseFirestore firestore, String userId) {return StreamBuilder<DocumentSnapshot>(
-  stream: firestore.collection('medical_records').doc(userId).snapshots(), // Stream for the user's medical records
-  builder: (context, snapshot) {
-    if (snapshot.connectionState == ConnectionState.waiting) {
-      return Center(child: CircularProgressIndicator());
-    }
-    if (!snapshot.hasData || !snapshot.data!.exists) {
-      return Center(child: Text('No medical records found.'));
-    }
+  Widget _buildMedicalRecordsList(FirebaseFirestore firestore, String userId) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: firestore
+          .collection('medical_records')
+          .where('userId', isEqualTo: userId)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('No medical records found.'));
+        }
 
-    // Print the data retrieved from Firestore
-    print('Medical Record Data: ${snapshot.data!.data()}');
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: snapshot.data!.docs.map((doc) {
+            Map<String, dynamic> medicalRecordData =
+            doc.data() as Map<String, dynamic>;
+            String blood = medicalRecordData?['blood'] ?? '';
+            String height = medicalRecordData?['height'] ?? '';
+            String weight = medicalRecordData?['weight'] ?? '';
+            String pressure = medicalRecordData?['pressure'] ?? '';
+            String cardiologist =
+                medicalRecordData?['cardiologist'] ?? '';
 
-    // Extract medical record data
-    Map<String, dynamic> medicalRecordData = snapshot.data!.data() as Map<String, dynamic>;
-    String username = medicalRecordData?['username'] ?? '';
-    String blood = medicalRecordData?['blood'] ?? '';
-    String height = medicalRecordData?['height'] ?? '';
-    String weight = medicalRecordData?['weight'] ?? '';
-    String pressure = medicalRecordData?['pressure'] ?? '';
-    String cardiologist = medicalRecordData?['cardiologist'] ?? '';
+            return Card(
+              margin: EdgeInsets.symmetric(vertical: 8),
+              elevation: 3,
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    _buildInfoBox(Icons.opacity, 'Blood', blood),
+                    SizedBox(height: 10),
+                    _buildInfoBox(Icons.height, 'Height', height),
+                    SizedBox(height: 10),
+                    _buildInfoBox(Icons.line_weight, 'Weight', weight),
+                    SizedBox(height: 10),
+                    _buildInfoBox(Icons.favorite, 'Pressure', pressure),
+                    SizedBox(height: 10),
+                    _buildInfoBox(
+                        Icons.favorite_border, 'Cardiologist', cardiologist),
+                  ],
+                ),
+              ),
+            );
+          }).toList(),
+        );
+      },
+    );
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildInfoBox(IconData icon, String label, String value) {
+    return Row(
       children: [
-        Text(
-          'medical_records',
-          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+        Icon(icon, color: Colors.blue),
+        SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: Colors.blue,
+              ),
+            ),
+            SizedBox(height: 4),
+            Container(
+              padding: EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[200],
+              ),
+              child: Text(
+                value,
+                style: TextStyle(fontSize: 14),
+              ),
+            ),
+          ],
         ),
-        SizedBox(height: 10),
-        Text('Username: $username'),
-        Text('Blood: $blood'),
-        Text('Height: $height'),
-        Text('Weight: $weight'),
-        Text('Pressure: $pressure'),
-        Text('Cardiologist: $cardiologist'),
       ],
     );
-  },
-);
+  }
 }
-
-
 
 class Medication {
   final String name;
@@ -530,7 +619,11 @@ class Medication {
   final String frequency;
   final String imageUrl;
 
-  Medication({required this.name, required this.dosage, required this.frequency, required this.imageUrl});
+  Medication(
+      {required this.name,
+        required this.dosage,
+        required this.frequency,
+        required this.imageUrl});
 
   factory Medication.fromFirestore(Map<String, dynamic> firestore) {
     return Medication(
@@ -541,6 +634,7 @@ class Medication {
     );
   }
 }
+
 class NewMedicalRecordScreen extends StatefulWidget {
   @override
   _NewMedicalRecordScreenState createState() => _NewMedicalRecordScreenState();
@@ -621,7 +715,7 @@ class _NewMedicalRecordScreenState extends State<NewMedicalRecordScreen> {
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
-                    _submitMedicalRecord();
+                    _showConfirmationDialog();
                   }
                 },
                 child: Text('Submit'),
@@ -632,6 +726,34 @@ class _NewMedicalRecordScreenState extends State<NewMedicalRecordScreen> {
       ),
     );
   }
+
+  void _showConfirmationDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Confirmation'),
+          content: Text('Are you sure you want to submit the medical record?'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _submitMedicalRecord();
+              },
+              child: Text('Okay'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _submitMedicalRecord() {
     // Add code to submit the medical record to Firestore
     String blood = _bloodController.text;
@@ -651,11 +773,50 @@ class _NewMedicalRecordScreenState extends State<NewMedicalRecordScreen> {
       // Add other fields as needed
     }).then((value) {
       // Handle success
-      Navigator.pop(context); // Navigate back to previous screen
+      _showSuccessDialog();
     }).catchError((error) {
       // Handle error
       print('Failed to add medical record: $error');
       // Optionally, show error message to user
     });
   }
+
+  void _showSuccessDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Success'),
+          content: Text('Medical record submitted successfully.'),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.of(context).pop(); // Pop twice to dismiss this screen and return to the previous screen
+              },
+              child: Text('Okay'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
+class UserProfilesScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    // Implement screen to display user profiles excluding health personnel
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('User Profiles'),
+      ),
+      body: Center(
+        child: Text('User Profiles Screen'),
+      ),
+    );
+  }
+}
+
+
+

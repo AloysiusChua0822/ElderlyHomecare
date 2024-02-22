@@ -66,107 +66,236 @@ class AvailableDoctorsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Available Doctors'),
-        backgroundColor: Colors.blueAccent,
+        title: Text('Find your Doctor'),
+        backgroundColor: Colors.white,
+
+        iconTheme: IconThemeData(color: Colors.black),
+        elevation: 0,
       ),
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Categories Section
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16.0),
-            child: Text(
-              'Categories',
-              style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
-            ),
-          ),
-          SizedBox(
-            height: 100.0,
-            child: ListView(
-              scrollDirection: Axis.horizontal,
-              children: [
-                _buildCategoryItem('Dental', Icons.face),
-                _buildCategoryItem('Heart', Icons.favorite_border),
-                _buildCategoryItem('Eyes', Icons.visibility),
-                // Add more categories here
-              ],
-            ),
-          ),
-          Divider(),
-          // Recommended Doctors Section
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Recommended Doctors',
-                  style: TextStyle(fontSize: 24.0, fontWeight: FontWeight.bold),
-                ),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'See All',
-                    style: TextStyle(color: Colors.blueAccent),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: InputDecoration(
+                  hintText: 'Search for doctor',
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(20),
+                    borderSide: BorderSide.none,
                   ),
+                  filled: true,
+                  fillColor: Colors.grey[200],
                 ),
-              ],
+              ),
             ),
-          ),
-          // Doctors List
-          Expanded(
-            child: ListView.builder(
+            Padding(
+              padding: EdgeInsets.only(left: 16.0, top: 8.0, bottom: 8.0),
+              child: Text('Avaliable Doctors', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            ),
+            // Categories
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              padding: EdgeInsets.symmetric(horizontal: 16),
+
+            ),
+            // Doctors Grid
+            GridView.builder(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(), // to disable GridView's scrolling
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                childAspectRatio: 0.85,
+              ),
               itemCount: doctors.length,
+              padding: EdgeInsets.all(16),
               itemBuilder: (BuildContext context, int index) {
                 final doctor = doctors[index];
-                return _buildDoctorCard(doctor);
+                return _buildDoctorCard(context, doctor);
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCategoryItem(String title, IconData icon) {
-    return Container(
-      width: 120.0,
-      margin: EdgeInsets.symmetric(horizontal: 8.0),
-      decoration: BoxDecoration(
-        color: Colors.grey[200],
-        borderRadius: BorderRadius.circular(10.0),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, size: 48.0, color: Colors.blueAccent),
-          SizedBox(height: 8.0),
-          Text(
-            title,
-            style: TextStyle(fontSize: 16.0, fontWeight: FontWeight.bold),
-          ),
-        ],
+  Widget _buildCategoryChip(String label, IconData icon) {
+    return Padding(
+      padding: EdgeInsets.only(right: 12),
+      child: Chip(
+        avatar: Icon(icon, color: Colors.white),
+        label: Text(label),
+
+        padding: EdgeInsets.all(8),
       ),
     );
   }
 
-  Widget _buildDoctorCard(Map<String, dynamic> doctor) {
+  Widget _buildDoctorCard(BuildContext context, Map<String, dynamic> doctor) {
     return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.0)),
-      elevation: 4.0,
-      margin: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 16.0),
-      child: ListTile(
-        leading: CircleAvatar(
-          radius: 30.0,
-          backgroundImage: NetworkImage(doctor['image_url']),
-        ),
-        title: Text(doctor['name']),
-        subtitle: Text(doctor['specialty']),
-        trailing: IconButton(
-          icon: Icon(Icons.favorite_border),
-          onPressed: () {},
+      margin: EdgeInsets.all(8),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => DoctorDetailScreen(doctor: doctor),
+            ),
+          );
+        },
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: CircleAvatar(
+                backgroundImage: NetworkImage(doctor['image_url']),
+                radius: 50,
+              ),
+            ),
+            Padding(
+              padding: EdgeInsets.all(8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    doctor['name'],
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    doctor['specialty'],
+                    style: TextStyle(color: Colors.grey),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
       ),
     );
+  }
+}
+
+class DoctorDetailScreen extends StatefulWidget {
+  final Map<String, dynamic> doctor;
+
+  DoctorDetailScreen({required this.doctor});
+
+  @override
+  _DoctorDetailScreenState createState() => _DoctorDetailScreenState();
+}
+
+class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
+  String selectedDate = '';
+  String selectedTime = '';
+
+  List<String> times = [
+    '08.00 AM',
+    '09:00 AM',
+    '10:00 AM',
+    '11.00 AM',
+    '2.00 PM',
+    '3:00 PM'
+  ]; // Example times
+
+  DateTime _selectedDateTime = DateTime.now();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        leading: BackButton(color: Colors.black),
+        backgroundColor: Colors.white,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            CircleAvatar(
+              radius: 50,
+              backgroundImage: NetworkImage(widget.doctor['image_url']),
+            ),
+            Text(
+              widget.doctor['name'],
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+            ),
+            Text(
+              widget.doctor['specialty'],
+              style: TextStyle(fontSize: 20, color: Colors.grey),
+            ),
+            SizedBox(height: 20),
+            Divider(),
+            ListTile(
+              title: Text(
+                _selectedDateTime.toString().split(' ')[0],
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              trailing: Icon(Icons.keyboard_arrow_down),
+              onTap: () => _selectDate(context),
+            ),
+            SizedBox(height: 20),
+            Divider(),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Column(
+                children: [
+                  Wrap(
+                    spacing: 8.0,
+                    children: times.map((time) {
+                      return ChoiceChip(
+                        label: Text(time),
+                        selected: selectedTime == time,
+                        onSelected: (bool selected) {
+                          setState(() {
+                            selectedTime = time;
+                          });
+                        },
+                      );
+                    }).toList(),
+                  ),
+                  SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: selectedDate.isNotEmpty && selectedTime.isNotEmpty
+                        ? () {
+                      // TODO: Implement booking logic
+                    }
+                        : null,
+                    child: Text('Book an Appointment'),
+                    style: ElevatedButton.styleFrom(
+                      primary: Colors.deepPurple,
+                      padding: EdgeInsets.symmetric(horizontal: 50, vertical: 15),
+                      textStyle: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? pickedDateTime = await showDatePicker(
+      context: context,
+      initialDate: _selectedDateTime,
+      firstDate: DateTime(2022),
+      lastDate: DateTime(2025),
+      initialDatePickerMode: DatePickerMode.day,
+    );
+
+    if (pickedDateTime != null) {
+      setState(() {
+        _selectedDateTime = pickedDateTime;
+        selectedDate = _selectedDateTime.toString().split(' ')[0];
+      });
+    }
   }
 }
