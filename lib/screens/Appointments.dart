@@ -250,17 +250,7 @@ class AvailableDoctorsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildCategoryChip(String label, IconData icon) {
-    return Padding(
-      padding: EdgeInsets.only(right: 12),
-      child: Chip(
-        avatar: Icon(icon, color: Colors.white),
-        label: Text(label),
 
-        padding: EdgeInsets.all(8),
-      ),
-    );
-  }
 
   Widget _buildDoctorCard(BuildContext context, Map<String, dynamic> doctor) {
     return Card(
@@ -556,7 +546,7 @@ class HealthPersonnelScreen extends StatelessWidget {
               itemCount: appointments.length,
               itemBuilder: (context, index) {
                 final appointment = appointments[index];
-                return _buildAppointmentCard(appointment);
+                return _buildAppointmentCard(context, appointment);
               },
             );
           }
@@ -565,12 +555,14 @@ class HealthPersonnelScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAppointmentCard(Map<String, dynamic> appointment) {
+  Widget _buildAppointmentCard(BuildContext context,
+      Map<String, dynamic> appointment) {
     final username = appointment['username'] ?? '';
     final date = appointment['date'] ?? '';
     final time = appointment['time'] ?? '';
     final additionalDetails = appointment['additional_details'] ?? '';
-    final status = appointment['status'] ?? 'pending'; // Default to pending if status is null
+    final status = appointment['status'] ??
+        'pending'; // Default to pending if status is null
 
     return Padding(
       padding: const EdgeInsets.all(8.0),
@@ -605,6 +597,25 @@ class HealthPersonnelScreen extends StatelessWidget {
                 'Status: $status', // Display the appointment status
                 style: TextStyle(fontSize: 14, color: _getStatusColor(status)),
               ),
+              SizedBox(height: 8),
+              if (status == 'pending')
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () => _updateAppointmentStatus(
+                          context, appointment['id'], 'accepted'), // assuming 'id' is the correct key for the appointment ID
+                      style: ElevatedButton.styleFrom(primary: Colors.green),
+                      child: Text('Accept'),
+                    ),
+                    ElevatedButton(
+                      onPressed: () => _updateAppointmentStatus(
+                          context, appointment['id'], 'rejected'), // assuming 'id' is the correct key for the appointment ID
+                      style: ElevatedButton.styleFrom(primary: Colors.red),
+                      child: Text('Reject'),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
@@ -624,6 +635,20 @@ class HealthPersonnelScreen extends StatelessWidget {
     }
   }
 
+  Future<String> _fetchUsername(String userId) async {
+    DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+
+    if (userSnapshot.exists) {
+      // Explicitly cast data() to Map<String, dynamic>
+      return (userSnapshot.data() as Map<String, dynamic>)['username'] ?? '';
+    } else {
+      return ''; // User not found, return an empty string or some default value
+    }
+  }
+
   Future<List<Map<String, dynamic>>> _fetchDoctorAppointments() async {
     User? user = FirebaseAuth.instance.currentUser;
     if (user != null) {
@@ -632,9 +657,36 @@ class HealthPersonnelScreen extends StatelessWidget {
           .collection('appointments')
           .where('doctor_name', isEqualTo: doctorName)
           .get();
-      return snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList();
+      return snapshot.docs.map((doc) {
+        // Add the document ID to the map
+        return {
+          'id': doc.id, // Make sure 'id' corresponds to your Firestore document ID
+          ...doc.data() as Map<String, dynamic>,
+        };
+      }).toList();
     } else {
       return [];
+    }
+  }
+
+  Future<void> _updateAppointmentStatus(BuildContext context,
+      String appointmentId, String status) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('appointments')
+          .doc(appointmentId)
+          .update({'status': status});
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Appointment status updated to $status.'),
+        ),
+      );
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to update appointment status: $e'),
+        ),
+      );
     }
   }
 }

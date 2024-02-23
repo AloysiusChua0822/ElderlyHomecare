@@ -15,6 +15,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
+  bool _isHealthPersonnel = false;
+  final String _userType2 = 'health_personnel';
   String _email = '';
   String _userType = '';
   File? _profilePicUrl;
@@ -28,6 +30,15 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _passwordController = TextEditingController();
     _loadUserProfile();
   }
+  void _checkUserType() {
+    // Check if user type is 'health_personnel'
+    if (_userType2 == 'health_personnel') {
+      setState(() {
+        _isHealthPersonnel = true;
+      });
+    }
+  }
+
 
   _loadUserProfile() async {
     if (user != null) {
@@ -49,6 +60,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
         String imagePath = userData.data()?['image_url'] ?? '';
         _profilePicUrl = imagePath.isNotEmpty ? File(imagePath) : null; // Check if imagePath is not empty
       });
+      // Check if user is health personnel
+
     }
   }
 
@@ -88,6 +101,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ? [IconButton(icon: Icon(Icons.save), onPressed: _updateUserProfile)]
             : null,
       ),
+
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
         child: Column(
@@ -108,6 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
+
     );
   }
 
@@ -198,7 +213,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
+  Widget _buildHealthPersonnelContent() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Add health personnel specific content here
+        Text(
+          'Health Personnel Content',
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
+        ),
+      ],
+    );
+  }
   void _editUsername() {
     showDialog(
       context: context,
@@ -635,6 +664,7 @@ class Medication {
   }
 }
 
+
 class NewMedicalRecordScreen extends StatefulWidget {
   @override
   _NewMedicalRecordScreenState createState() => _NewMedicalRecordScreenState();
@@ -818,5 +848,22 @@ class UserProfilesScreen extends StatelessWidget {
   }
 }
 
+class HealthPersonnelScreen extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Health Personnel Screen'),
+      ),
+      body: Center(
+        child: Text(
+          'Welcome to the Health Personnel Screen!',
+          style: TextStyle(fontSize: 20),
+        ),
+      ),
+    );
+  }
+
+}
 
 
