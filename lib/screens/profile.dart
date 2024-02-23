@@ -15,8 +15,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   late TextEditingController _usernameController;
   late TextEditingController _passwordController;
-  bool _isHealthPersonnel = false;
-  final String _userType2 = 'health_personnel';
   String _email = '';
   String _userType = '';
   File? _profilePicUrl;
@@ -29,14 +27,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     _usernameController = TextEditingController();
     _passwordController = TextEditingController();
     _loadUserProfile();
-  }
-  void _checkUserType() {
-    // Check if user type is 'health_personnel'
-    if (_userType2 == 'health_personnel') {
-      setState(() {
-        _isHealthPersonnel = true;
-      });
-    }
   }
 
 
@@ -132,7 +122,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => HealthReportDetailsScreen(healthReportId: 'pass_the_health_report_id_here'), // Replace with actual ID
+            builder: (context) => HealthReportDetailsScreen(healthReportId: 'healthReportId'), // Replace with actual ID
           ),
         );
       },
@@ -213,21 +203,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-  Widget _buildHealthPersonnelContent() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Add health personnel specific content here
-        Text(
-          'Health Personnel Content',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
-        ),
-      ],
-    );
-  }
+
   void _editUsername() {
     showDialog(
       context: context,
@@ -393,7 +369,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
 }
 
 
-
 class HealthReportDetailsScreen extends StatelessWidget {
   final String healthReportId;
 
@@ -409,28 +384,6 @@ class HealthReportDetailsScreen extends StatelessWidget {
         title: Text('Health Report Details'),
         actions: [
           IconButton(
-            icon: Icon(Icons.people),
-            onPressed: () {
-              // Check if user is health personnel
-              if (user != null && isHealthPersonnel(user)) {
-                // Navigate to screen displaying all users except health personnel
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => UserProfilesScreen(),
-                  ),
-                );
-              } else {
-                // Display message for non-health personnel users
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('You do not have access to view user profiles.'),
-                  ),
-                );
-              }
-            },
-          ),
-          IconButton(
             icon: Icon(Icons.add),
             onPressed: () {
               Navigator.push(
@@ -439,6 +392,37 @@ class HealthReportDetailsScreen extends StatelessWidget {
                   builder: (context) => NewMedicalRecordScreen(),
                 ),
               );
+            },
+          ),
+          FutureBuilder<DocumentSnapshot>(
+            future: _firestore.collection('users').doc(user!.uid).get(),
+            builder: (BuildContext context,
+                AsyncSnapshot<DocumentSnapshot> snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return SizedBox();
+              }
+              if (snapshot.hasError || !snapshot.hasData) {
+                return SizedBox();
+              }
+              final userData = snapshot.data!.data() as Map<String, dynamic>?; // Explicit casting
+              final userType = userData?['userType'];
+
+              // Only show the icon if the user type is 'health_personnel'
+              if (userType == 'Health Personnel') {
+                return IconButton(
+                  icon: Icon(Icons.people),
+                  onPressed: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                        builder: (context) => HealthPersonnelScreen(),
+                        ),
+                    );
+                  },
+                );
+              } else {
+                return SizedBox();
+              }
             },
           ),
         ],
@@ -492,11 +476,6 @@ class HealthReportDetailsScreen extends StatelessWidget {
     );
   }
 
-  bool isHealthPersonnel(User user) {
-
-    return false; // Placeholder logic, replace with actual implementation
-  }
-
   Widget _buildMedicationsList(FirebaseFirestore firestore, User user) {
     return StreamBuilder<QuerySnapshot>(
       stream: firestore
@@ -541,8 +520,7 @@ class HealthReportDetailsScreen extends StatelessWidget {
                     ),
                     title: Text(medication.name),
                     subtitle: Text(
-                        'Dosage: ${medication.dosage}\nFrequency: ${medication
-                            .frequency}'),
+                        'Dosage: ${medication.dosage}\nFrequency: ${medication.frequency}'),
                   ),
                 );
               },
@@ -641,7 +619,6 @@ class HealthReportDetailsScreen extends StatelessWidget {
     );
   }
 }
-
 class Medication {
   final String name;
   final String dosage;
@@ -833,21 +810,6 @@ class _NewMedicalRecordScreenState extends State<NewMedicalRecordScreen> {
   }
 }
 
-class UserProfilesScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // Implement screen to display user profiles excluding health personnel
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('User Profiles'),
-      ),
-      body: Center(
-        child: Text('User Profiles Screen'),
-      ),
-    );
-  }
-}
-
 class HealthPersonnelScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
@@ -855,15 +817,86 @@ class HealthPersonnelScreen extends StatelessWidget {
       appBar: AppBar(
         title: Text('Health Personnel Screen'),
       ),
-      body: Center(
-        child: Text(
-          'Welcome to the Health Personnel Screen!',
-          style: TextStyle(fontSize: 20),
-        ),
-      ),
+      body: HealthReportsList(),
     );
   }
-
 }
 
+class HealthReportsList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance.collection('medical_records').snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Center(child: CircularProgressIndicator());
+        }
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return Center(child: Text('No health reports found.'));
+        }
 
+        return ListView.builder(
+          itemCount: snapshot.data!.docs.length,
+          itemBuilder: (context, index) {
+            DocumentSnapshot report = snapshot.data!.docs[index];
+            return HealthReportCard(report: report);
+          },
+        );
+      },
+    );
+  }
+}
+
+class HealthReportCard extends StatelessWidget {
+  final DocumentSnapshot report;
+
+  HealthReportCard({required this.report});
+
+  @override
+  Widget build(BuildContext context) {
+    String userId = report['userId'];
+    String blood = report['blood'];
+    String height = report['height'];
+    String weight = report['weight'];
+    String pressure = report['pressure'];
+    String cardiologist = report['cardiologist'];
+
+    return FutureBuilder<DocumentSnapshot>(
+      future: FirebaseFirestore.instance.collection('users').doc(userId).get(),
+      builder: (BuildContext context, AsyncSnapshot<DocumentSnapshot> snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return CircularProgressIndicator();
+        }
+        if (!snapshot.hasData || !snapshot.data!.exists) {
+          return Text('User not found');
+        }
+
+        // Extract username from the user document snapshot
+        String username = snapshot.data!['username'];
+
+        return Card(
+          margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          elevation: 3,
+          child: Padding(
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Username: $username', // Display username instead of userId
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                SizedBox(height: 8),
+                Text('Blood: $blood'),
+                Text('Height: $height'),
+                Text('Weight: $weight'),
+                Text('Pressure: $pressure'),
+                Text('Cardiologist: $cardiologist'),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
