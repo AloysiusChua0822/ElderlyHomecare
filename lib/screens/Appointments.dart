@@ -444,7 +444,6 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  primary: Colors.deepPurple,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
