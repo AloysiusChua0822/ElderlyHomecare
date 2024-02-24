@@ -635,19 +635,6 @@ class HealthPersonnelScreen extends StatelessWidget {
     }
   }
 
-  Future<String> _fetchUsername(String userId) async {
-    DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
-        .collection('users')
-        .doc(userId)
-        .get();
-
-    if (userSnapshot.exists) {
-      // Explicitly cast data() to Map<String, dynamic>
-      return (userSnapshot.data() as Map<String, dynamic>)['username'] ?? '';
-    } else {
-      return ''; // User not found, return an empty string or some default value
-    }
-  }
 
   Future<List<Map<String, dynamic>>> _fetchDoctorAppointments() async {
     User? user = FirebaseAuth.instance.currentUser;
@@ -657,13 +644,26 @@ class HealthPersonnelScreen extends StatelessWidget {
           .collection('appointments')
           .where('doctor_name', isEqualTo: doctorName)
           .get();
-      return snapshot.docs.map((doc) {
-        // Add the document ID to the map
-        return {
-          'id': doc.id, // Make sure 'id' corresponds to your Firestore document ID
-          ...doc.data() as Map<String, dynamic>,
-        };
-      }).toList();
+      final List<Map<String, dynamic>> appointments = [];
+      for (final doc in snapshot.docs) {
+        final userId = doc['username']; // Assuming 'userId' is the field storing the user ID
+        final userSnapshot = await FirebaseFirestore.instance
+            .collection('users')
+            .doc(userId)
+            .get();
+
+        if (userSnapshot.exists) {
+          final userData = userSnapshot.data() as Map<String, dynamic>;
+          final username = userData['username']; // Assuming 'username' is the field storing the username
+
+          appointments.add({
+            'id': doc.id,
+            ...doc.data() as Map<String, dynamic>,
+            'username': username,
+          });
+        }
+      }
+      return appointments;
     } else {
       return [];
     }

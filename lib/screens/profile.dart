@@ -892,11 +892,82 @@ class HealthReportCard extends StatelessWidget {
                 Text('Weight: $weight'),
                 Text('Pressure: $pressure'),
                 Text('Cardiologist: $cardiologist'),
+                MedicationsList(userId: userId),
               ],
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class MedicationsList extends StatelessWidget {
+  final String userId;
+
+  MedicationsList({required this.userId});
+
+  @override
+  Widget build(BuildContext context) {
+    FirebaseFirestore firestore = FirebaseFirestore.instance;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 8.0),
+          child: Text(
+            'Medications:',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+        ),
+        StreamBuilder<QuerySnapshot>(
+          stream: firestore
+              .collection('medications')
+              .where('userId', isEqualTo: userId)
+              .snapshots(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Center(child: CircularProgressIndicator());
+            }
+            if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              return Text('No medications found.');
+            }
+
+            return ListView(
+              shrinkWrap: true,
+              physics: NeverScrollableScrollPhysics(),
+              children: snapshot.data!.docs.map((doc) {
+                var medicationData = doc.data() as Map<String, dynamic>;
+                return Card(
+                  elevation: 2,
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: medicationData['imageUrl'] != null
+                        ? Image.network(
+                      medicationData['imageUrl'],
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    )
+                        : Icon(Icons.medication, size: 50),
+                    title: Text(medicationData['name'] ?? 'No name provided'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Dosage: ${medicationData['dosage'] ?? 'No dosage provided'}'),
+                        Text('Frequency: ${medicationData['frequency'] ?? 'No frequency provided'}'),
+                        // Add more fields as necessary
+                      ],
+                    ),
+                    isThreeLine: true,
+                  ),
+                );
+              }).toList(),
+            );
+          },
+        ),
+      ],
     );
   }
 }

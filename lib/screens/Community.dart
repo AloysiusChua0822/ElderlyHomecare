@@ -583,7 +583,7 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
           'groupId': widget.groupId,
           'file_url': fileUrl,
           'senderId': user.uid, // Include sender's ID in the message
-          'username': user.displayName ?? 'Unknown', // Use display name from Firebase Authentication
+          'username': user.displayName ?? 'Unknon', // Use display name from Firebase Authentication
           'timestamp': Timestamp.now(),
         });
       }
@@ -805,15 +805,15 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
     if (_messageController.text.isNotEmpty) {
       User? user = FirebaseAuth.instance.currentUser; // Get current user
       if (user != null) {
-        // Fetch user's photo URL from Firestore
+        // Fetch user's username and photo URL from Firestore
+        String username = await _getUsername(user.uid);
         String pictureUrl = await _getUserPhotoUrl(user.uid);
 
         await FirebaseFirestore.instance.collection('messages').add({
           'groupId': widget.groupId,
           'text': _messageController.text,
           'senderId': user.uid, // Include sender's ID in the message
-          'username': user.displayName ?? 'Unknown',
-          // Use display name from Firebase Authentication
+          'username': username, // Use username fetched from Firestore
           'image_url': pictureUrl,
           'timestamp': Timestamp.now(),
         });
@@ -843,6 +843,26 @@ class _GroupChatScreenState extends State<GroupChatScreen> {
 
     return photoUrl;
   }
+}
+
+// Method to fetch username from Firestore
+Future<String> _getUsername(String userId) async {
+  String username = 'Unknown'; // Default username
+
+  try {
+    DocumentSnapshot userSnapshot = await FirebaseFirestore.instance
+        .collection('users')
+        .doc(userId)
+        .get();
+    if (userSnapshot.exists) {
+      Map<String, dynamic> userData = userSnapshot.data() as Map<String, dynamic>;
+      username = userData['username'] ?? 'Unknown'; // Get username from user data
+    }
+  } catch (e) {
+    print('Error fetching username: $e');
+  }
+
+  return username;
 }
 
 
