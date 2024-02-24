@@ -444,6 +444,7 @@ class _DoctorDetailScreenState extends State<DoctorDetailScreen> {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.deepPurple,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
@@ -604,13 +605,13 @@ class HealthPersonnelScreen extends StatelessWidget {
                     ElevatedButton(
                       onPressed: () => _updateAppointmentStatus(
                           context, appointment['id'], 'accepted'), // assuming 'id' is the correct key for the appointment ID
-                      style: ElevatedButton.styleFrom(primary: Colors.green),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
                       child: Text('Accept'),
                     ),
                     ElevatedButton(
                       onPressed: () => _updateAppointmentStatus(
                           context, appointment['id'], 'rejected'), // assuming 'id' is the correct key for the appointment ID
-                      style: ElevatedButton.styleFrom(primary: Colors.red),
+                      style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                       child: Text('Reject'),
                     ),
                   ],

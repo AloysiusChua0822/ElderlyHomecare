@@ -12,6 +12,12 @@ class ProductList extends StatelessWidget{
   @override
 Widget build(BuildContext context){
     return Container(
+      decoration: BoxDecoration(
+          color: Colors.lightGreenAccent,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      margin: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(25),
       child: Column(
         children: [
           //product favorite
@@ -24,7 +30,7 @@ Widget build(BuildContext context){
       Text(product.description),
 
       //product price
-      Text(product.price.toStringAsFixed(2)),
+      Text(product.price),
         ],
       ),
     );

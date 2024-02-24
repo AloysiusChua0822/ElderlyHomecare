@@ -45,7 +45,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final List<Widget> _widgetOptions = [
       HomeContent(username: _username, profilePicUrl: _profilePicUrl),
       CommunityListScreen(),
-      ShopIntroPage(),
+      ChatListScreen(),
       ProfileScreen(),
     ];
 

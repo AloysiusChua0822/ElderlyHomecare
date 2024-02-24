@@ -3,6 +3,8 @@ import 'package:eldergit/screens/activityscreen.dart';
 import 'package:eldergit/screens/medication.dart';
 import 'package:eldergit/screens/news.dart';
 import 'package:eldergit/screens/Appointments.dart';
+import 'package:eldergit/ShoppingCart/ShoppingCart_Intro.dart';
+
 // Add any other necessary imports here
 
 class BigButton extends StatelessWidget {
@@ -143,7 +145,7 @@ class _HomeContentState extends State<HomeContent> {
                   label: 'Shop',
                   iconColor: Colors.white,
                   cardColor: Colors.redAccent,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => AppointmentScreen())),
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (context) => ShopIntroPage())),
                   width: MediaQuery.of(context).size.width * 0.6,
                   height: MediaQuery.of(context).size.height * 0.2,
                 ),
