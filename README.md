@@ -1,6 +1,6 @@
-# eldergit
+# An Application Engineered to enhance living of Elders
 
-A new Flutter project.
+Users can easily access to newest information, while also join activities easy!
 
 ## Getting Started
 
